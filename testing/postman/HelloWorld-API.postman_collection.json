@@ -1,0 +1,1409 @@
+{
+	"info": {
+		"_postman_id": "h1w2e3r4-t5y6-u7i8-o9p0-a1s2d3f4g5h6",
+		"name": "TCSS-460 HelloWorld API",
+		"description": "Educational test collection for the TCSS-460 HelloWorld API.\n\nThis collection provides comprehensive test coverage for health check endpoints and demonstrates API testing best practices including:\n- Health monitoring endpoints\n- Response format validation\n- Error handling scenarios\n- Performance testing basics\n\nDesigned for educational purposes to teach API testing fundamentals.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "educational"
+	},
+	"item": [
+		{
+			"name": "Health Checks",
+			"item": [
+				{
+					"name": "GET Basic Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing basic health endpoint",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('timestamp');",
+									"    pm.expect(responseJson.data).to.have.property('status', 'OK');",
+									"    pm.expect(responseJson.data).to.have.property('timestamp');",
+									"});",
+									"",
+									"pm.test('Response time is acceptable', function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});",
+									"",
+									"pm.test('Content-Type is application/json', function () {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+									"});",
+									"",
+									"pm.test('Response data has valid timestamp', function () {",
+									"    const responseJson = pm.response.json();",
+									"    const timestamp = new Date(responseJson.data.timestamp);",
+									"    pm.expect(timestamp.getTime()).to.be.greaterThan(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Basic health check endpoint to verify API availability and response format."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Detailed Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing detailed health endpoint with system information",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has detailed health structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson.data).to.have.property('status', 'OK');",
+									"    pm.expect(responseJson.data).to.have.property('details');",
+									"});",
+									"",
+									"pm.test('Details contain system information', function () {",
+									"    const details = pm.response.json().data.details;",
+									"    pm.expect(details).to.have.property('uptime');",
+									"    pm.expect(details).to.have.property('memory');",
+									"    pm.expect(details).to.have.property('version');",
+									"    pm.expect(details).to.have.property('environment');",
+									"});",
+									"",
+									"pm.test('Memory information is valid', function () {",
+									"    const memory = pm.response.json().data.details.memory;",
+									"    pm.expect(memory).to.have.property('used');",
+									"    pm.expect(memory).to.have.property('total');",
+									"    pm.expect(memory.used).to.be.a('number');",
+									"    pm.expect(memory.total).to.be.a('number');",
+									"    pm.expect(memory.total).to.be.greaterThan(memory.used);",
+									"});",
+									"",
+									"pm.test('Uptime is a positive number', function () {",
+									"    const uptime = pm.response.json().data.details.uptime;",
+									"    pm.expect(uptime).to.be.a('number');",
+									"    pm.expect(uptime).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test('Version and environment are present', function () {",
+									"    const details = pm.response.json().data.details;",
+									"    pm.expect(details.version).to.be.a('string');",
+									"    pm.expect(details.environment).to.be.a('string');",
+									"    pm.expect(details.version).to.not.be.empty;",
+									"    pm.expect(details.environment).to.not.be.empty;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health/detailed",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health",
+								"detailed"
+							]
+						},
+						"description": "Detailed health check with system information including uptime, memory usage, and environment details."
+					},
+					"response": []
+				}
+			],
+			"description": "Health monitoring endpoints for API availability and system status checking."
+		},
+		{
+			"name": "API Information",
+			"item": [
+				{
+					"name": "GET API Root",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing API root endpoint for basic information",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains API information', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('version');",
+									"    pm.expect(responseJson).to.have.property('timestamp');",
+									"    pm.expect(responseJson).to.have.property('endpoints');",
+									"});",
+									"",
+									"pm.test('API message contains HelloWorld reference', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message).to.include('HelloWorld');",
+									"});",
+									"",
+									"pm.test('Endpoints information is present', function () {",
+									"    const endpoints = pm.response.json().endpoints;",
+									"    pm.expect(endpoints).to.have.property('health');",
+									"    pm.expect(endpoints).to.have.property('healthDetailed');",
+									"    pm.expect(endpoints.health).to.equal('/health');",
+									"    pm.expect(endpoints.healthDetailed).to.equal('/health/detailed');",
+									"    pm.expect(endpoints).to.have.property('hello');",
+									"    pm.expect(endpoints.hello).to.equal('/hello');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "API root endpoint providing basic API information and available endpoints."
+					},
+					"response": []
+				}
+			],
+			"description": "API information and discovery endpoints."
+		},
+		{
+			"name": "Error Handling",
+			"item": [
+				{
+					"name": "GET Non-existent Endpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing 404 error handling for non-existent endpoints",
+									"pm.test('Status code is 404', function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test('Error response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', false);",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('code');",
+									"    pm.expect(responseJson).to.have.property('timestamp');",
+									"});",
+									"",
+									"pm.test('Error code is NOT_FOUND', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.code).to.equal('NOT_FOUND');",
+									"});",
+									"",
+									"pm.test('Error message mentions route not found', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('not found');",
+									"});",
+									"",
+									"pm.test('Content-Type is still application/json', function () {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/nonexistent",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"nonexistent"
+							]
+						},
+						"description": "Test 404 error handling for requests to non-existent endpoints."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Invalid JSON",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing JSON syntax error handling",
+									"pm.test('Status code is 400', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error indicates JSON parsing issue', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', false);",
+									"    pm.expect(responseJson.code).to.equal('INVALID_REQUEST_FORMAT');",
+									"});",
+									"",
+									"pm.test('Error message mentions JSON', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('json');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ invalid json syntax"
+						},
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Test JSON syntax error handling with malformed request body."
+					},
+					"response": []
+				}
+			],
+			"description": "Error handling test scenarios for various failure conditions."
+		},
+		{
+			"name": "CORS Testing",
+			"item": [
+				{
+					"name": "OPTIONS Health Check (CORS Preflight)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing CORS preflight request handling",
+									"pm.test('Status code is 204 (No Content)', function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"pm.test('CORS headers are present', function () {",
+									"    pm.expect(pm.response.headers.has('Access-Control-Allow-Origin')).to.be.true;",
+									"    pm.expect(pm.response.headers.has('Access-Control-Allow-Methods')).to.be.true;",
+									"    pm.expect(pm.response.headers.has('Access-Control-Allow-Headers')).to.be.true;",
+									"});",
+									"",
+									"pm.test('Allowed methods include GET', function () {",
+									"    const allowedMethods = pm.response.headers.get('Access-Control-Allow-Methods');",
+									"    pm.expect(allowedMethods).to.include('GET');",
+									"});",
+									"",
+									"pm.test('Response time is very fast for preflight', function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(100);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "OPTIONS",
+						"header": [
+							{
+								"key": "Origin",
+								"value": "{{test_origin}}"
+							},
+							{
+								"key": "Access-Control-Request-Method",
+								"value": "GET"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Test CORS preflight request handling for cross-origin requests."
+					},
+					"response": []
+				}
+			],
+			"description": "CORS (Cross-Origin Resource Sharing) testing scenarios."
+		},
+		{
+			"name": "Hello World Demonstrations",
+			"item": [
+				{
+					"name": "GET Hello World",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing GET method characteristics",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('timestamp');",
+									"});",
+									"",
+									"pm.test('Response contains GET method information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('message', 'Hello, World!');",
+									"    pm.expect(data).to.have.property('method', 'GET');",
+									"    pm.expect(data).to.have.property('description');",
+									"    pm.expect(data.description).to.include('retrieving data');",
+									"    pm.expect(data.description).to.include('idempotent');",
+									"});",
+									"",
+									"pm.test('GET is safe and idempotent', function () {",
+									"    const description = pm.response.json().data.description;",
+									"    pm.expect(description.toLowerCase()).to.include('safe');",
+									"    pm.expect(description.toLowerCase()).to.include('idempotent');",
+									"});",
+									"",
+									"pm.test('Response time is acceptable', function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/hello",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hello"
+							]
+						},
+						"description": "Demonstrates GET method for safe, idempotent data retrieval."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Hello World",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing POST method characteristics",
+									"pm.test('Status code is 201 (Created)', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Response contains POST method information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('message', 'Hello, World!');",
+									"    pm.expect(data).to.have.property('method', 'POST');",
+									"    pm.expect(data).to.have.property('description');",
+									"    pm.expect(data.description).to.include('creating');",
+									"    pm.expect(data.description).to.include('side effects');",
+									"});",
+									"",
+									"pm.test('POST has side effects and is not idempotent', function () {",
+									"    const description = pm.response.json().data.description;",
+									"    pm.expect(description.toLowerCase()).to.include('side effects');",
+									"    pm.expect(description.toLowerCase()).to.include('not idempotent');",
+									"});",
+									"",
+									"pm.test('Success message mentions creation', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('created');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/hello",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hello"
+							]
+						},
+						"description": "Demonstrates POST method for resource creation with side effects."
+					},
+					"response": []
+				},
+				{
+					"name": "PUT Hello World",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing PUT method characteristics",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Response contains PUT method information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('message', 'Hello, World!');",
+									"    pm.expect(data).to.have.property('method', 'PUT');",
+									"    pm.expect(data).to.have.property('description');",
+									"    pm.expect(data.description).to.include('replacing');",
+									"    pm.expect(data.description).to.include('idempotent');",
+									"});",
+									"",
+									"pm.test('PUT is idempotent and replaces entire resource', function () {",
+									"    const description = pm.response.json().data.description;",
+									"    pm.expect(description.toLowerCase()).to.include('idempotent');",
+									"    pm.expect(description.toLowerCase()).to.include('entire');",
+									"});",
+									"",
+									"pm.test('Success message mentions replacement', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('replaced');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/hello",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hello"
+							]
+						},
+						"description": "Demonstrates PUT method for idempotent resource creation/replacement."
+					},
+					"response": []
+				},
+				{
+					"name": "PATCH Hello World",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing PATCH method characteristics",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Response contains PATCH method information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('message', 'Hello, World!');",
+									"    pm.expect(data).to.have.property('method', 'PATCH');",
+									"    pm.expect(data).to.have.property('description');",
+									"    pm.expect(data.description).to.include('partial');",
+									"    pm.expect(data.description).to.include('updates');",
+									"});",
+									"",
+									"pm.test('PATCH is for partial updates', function () {",
+									"    const description = pm.response.json().data.description;",
+									"    pm.expect(description.toLowerCase()).to.include('partial');",
+									"    pm.expect(description.toLowerCase()).to.include('specific fields');",
+									"});",
+									"",
+									"pm.test('Success message mentions update', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('updated');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/hello",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hello"
+							]
+						},
+						"description": "Demonstrates PATCH method for partial resource updates."
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE Hello World",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing DELETE method characteristics",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Response contains DELETE method information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('message', 'Goodbye, World!');",
+									"    pm.expect(data).to.have.property('method', 'DELETE');",
+									"    pm.expect(data).to.have.property('description');",
+									"    pm.expect(data.description).to.include('removing');",
+									"    pm.expect(data.description).to.include('idempotent');",
+									"});",
+									"",
+									"pm.test('DELETE is idempotent', function () {",
+									"    const description = pm.response.json().data.description;",
+									"    pm.expect(description.toLowerCase()).to.include('idempotent');",
+									"    pm.expect(description.toLowerCase()).to.include('multiple deletions');",
+									"});",
+									"",
+									"pm.test('Success message mentions deletion', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('deleted');",
+									"});",
+									"",
+									"pm.test('DELETE returns goodbye message', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data.message).to.include('Goodbye');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/hello",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hello"
+							]
+						},
+						"description": "Demonstrates DELETE method for idempotent resource removal."
+					},
+					"response": []
+				}
+			],
+			"description": "Educational demonstrations of all five major HTTP methods showing their characteristics and proper usage."
+		},
+		{
+			"name": "Parameter Demonstrations",
+			"item": [
+				{
+					"name": "GET Query Parameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing query parameter extraction and validation",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('timestamp');",
+									"});",
+									"",
+									"pm.test('Response contains query parameter information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('parameterType', 'query');",
+									"    pm.expect(data).to.have.property('parameterValue', 'StudentName');",
+									"    pm.expect(data).to.have.property('validation');",
+									"    pm.expect(data.validation).to.have.property('applied');",
+									"    pm.expect(data.validation).to.have.property('sanitized', true);",
+									"});",
+									"",
+									"pm.test('Message contains query parameter value', function () {",
+									"    const message = pm.response.json().data.message;",
+									"    pm.expect(message).to.include('StudentName');",
+									"    pm.expect(message).to.include('query parameter');",
+									"});",
+									"",
+									"pm.test('Validation was applied', function () {",
+									"    const validation = pm.response.json().data.validation;",
+									"    pm.expect(validation.applied).to.be.an('array');",
+									"    pm.expect(validation.applied.length).to.be.greaterThan(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/parameters/query?name=StudentName",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"query"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "StudentName"
+								}
+							]
+						},
+						"description": "Demonstrates query parameter extraction, validation, and sanitization."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Query Parameters - Validation Error",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing query parameter validation errors",
+									"pm.test('Status code is 400 (validation error)', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', false);",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('code', 'INVALID_FIELD_VALUE');",
+									"    pm.expect(responseJson).to.have.property('validationErrors');",
+									"});",
+									"",
+									"pm.test('Validation errors contain field information', function () {",
+									"    const errors = pm.response.json().validationErrors;",
+									"    pm.expect(errors).to.be.an('array');",
+									"    pm.expect(errors.length).to.be.greaterThan(0);",
+									"    pm.expect(errors[0]).to.have.property('field', 'name');",
+									"    pm.expect(errors[0]).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Error message mentions validation failure', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('validation');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/parameters/query",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"query"
+							]
+						},
+						"description": "Tests query parameter validation by omitting required parameter."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Path Parameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing path parameter extraction and validation",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Response contains path parameter information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('parameterType', 'path');",
+									"    pm.expect(data).to.have.property('parameterValue', 'johnsmith');",
+									"    pm.expect(data).to.have.property('validation');",
+									"});",
+									"",
+									"pm.test('Message contains path parameter value', function () {",
+									"    const message = pm.response.json().data.message;",
+									"    pm.expect(message).to.include('johnsmith');",
+									"    pm.expect(message).to.include('path parameter');",
+									"});",
+									"",
+									"pm.test('Path parameter was sanitized', function () {",
+									"    const validation = pm.response.json().data.validation;",
+									"    pm.expect(validation.sanitized).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/parameters/path/johnsmith",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"path",
+								"johnsmith"
+							]
+						},
+						"description": "Demonstrates path parameter extraction from URL segments."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Path Parameters - Special Characters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing path parameter with special characters",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Special characters are handled correctly', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data.parameterValue).to.include('user-name_123');",
+									"});",
+									"",
+									"pm.test('Validation applied to special characters', function () {",
+									"    const validation = pm.response.json().data.validation;",
+									"    pm.expect(validation.applied).to.include('sanitization');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/parameters/path/user-name_123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"path",
+								"user-name_123"
+							]
+						},
+						"description": "Tests path parameter handling with special characters."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Body Parameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing request body parameter extraction and validation",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Response contains body parameter information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('parameterType', 'body');",
+									"    pm.expect(data).to.have.property('parameterValue', 'Course Project Data');",
+									"    pm.expect(data).to.have.property('validation');",
+									"});",
+									"",
+									"pm.test('Message contains body parameter value', function () {",
+									"    const message = pm.response.json().data.message;",
+									"    pm.expect(message).to.include('Course Project Data');",
+									"    pm.expect(message).to.include('request body');",
+									"});",
+									"",
+									"pm.test('JSON validation was applied', function () {",
+									"    const validation = pm.response.json().data.validation;",
+									"    pm.expect(validation.applied).to.include('JSON parsing');",
+									"    pm.expect(validation.applied).to.include('field validation');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Course Project Data\",\n    \"description\": \"Educational example\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/parameters/body",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"body"
+							]
+						},
+						"description": "Demonstrates request body parameter extraction from JSON payload."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Body Parameters - Validation Error",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing body parameter validation errors",
+									"pm.test('Status code is 400 (validation error)', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error response has validation structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', false);",
+									"    pm.expect(responseJson).to.have.property('validationErrors');",
+									"});",
+									"",
+									"pm.test('Validation errors mention missing field', function () {",
+									"    const errors = pm.response.json().validationErrors;",
+									"    pm.expect(errors).to.be.an('array');",
+									"    pm.expect(errors[0]).to.have.property('field', 'name');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Missing required name field\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/parameters/body",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"body"
+							]
+						},
+						"description": "Tests body parameter validation by omitting required field."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Body Parameters - Invalid JSON",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing JSON parsing error handling",
+									"pm.test('Status code is 400 (JSON error)', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error response indicates JSON parsing issue', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', false);",
+									"    pm.expect(responseJson.code).to.equal('INVALID_REQUEST_FORMAT');",
+									"});",
+									"",
+									"pm.test('Error message mentions JSON', function () {",
+									"    const message = pm.response.json().message;",
+									"    pm.expect(message.toLowerCase()).to.include('json');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ invalid json syntax: missing quotes }"
+						},
+						"url": {
+							"raw": "{{base_url}}/parameters/body",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"body"
+							]
+						},
+						"description": "Tests JSON parsing error handling with malformed request body."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Header Parameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing header parameter extraction and validation",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', true);",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"});",
+									"",
+									"pm.test('Response contains header parameter information', function () {",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data).to.have.property('parameterType', 'header');",
+									"    pm.expect(data).to.have.property('parameterValue', 'MyCustomValue');",
+									"    pm.expect(data).to.have.property('validation');",
+									"});",
+									"",
+									"pm.test('Message contains header parameter value', function () {",
+									"    const message = pm.response.json().data.message;",
+									"    pm.expect(message).to.include('MyCustomValue');",
+									"    pm.expect(message).to.include('header');",
+									"});",
+									"",
+									"pm.test('Header validation was applied', function () {",
+									"    const validation = pm.response.json().data.validation;",
+									"    pm.expect(validation.applied).to.include('header extraction');",
+									"    pm.expect(validation.sanitized).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-User-Name",
+								"value": "MyCustomValue"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/parameters/headers",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"headers"
+							]
+						},
+						"description": "Demonstrates header parameter extraction from HTTP headers."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Header Parameters - Missing Header",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing header parameter validation errors",
+									"pm.test('Status code is 400 (validation error)', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error response has validation structure', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('success', false);",
+									"    pm.expect(responseJson).to.have.property('validationErrors');",
+									"});",
+									"",
+									"pm.test('Validation errors mention missing header', function () {",
+									"    const errors = pm.response.json().validationErrors;",
+									"    pm.expect(errors).to.be.an('array');",
+									"    pm.expect(errors[0]).to.have.property('field', 'x-user-name');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/parameters/headers",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"headers"
+							]
+						},
+						"description": "Tests header parameter validation by omitting required header."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Parameters - Long String Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing parameter length validation boundaries",
+									"pm.test('Status code is 400 (validation error)', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error indicates string too long', function () {",
+									"    const errors = pm.response.json().validationErrors;",
+									"    pm.expect(errors[0].message).to.include('50 characters');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/parameters/query?name=ThisIsAVeryLongNameThatExceedsTheFiftyCharacterLimitSetByValidation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"query"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "ThisIsAVeryLongNameThatExceedsTheFiftyCharacterLimitSetByValidation"
+								}
+							]
+						},
+						"description": "Tests parameter length validation boundaries."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Content-Type Validation Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Testing Content-Type header validation",
+									"pm.test('Status code is 400 (invalid content type)', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Error indicates Content-Type issue', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('Content-Type');",
+									"    pm.expect(responseJson.message).to.include('application/json');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/plain"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"data\": \"test\" }"
+						},
+						"url": {
+							"raw": "{{base_url}}/parameters/body",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"parameters",
+								"body"
+							]
+						},
+						"description": "Tests Content-Type validation for JSON endpoints."
+					},
+					"response": []
+				}
+			],
+			"description": "Educational demonstrations of parameter types: query, path, body, and headers with validation examples."
+		},
+		{
+			"name": "Performance Testing",
+			"item": [
+				{
+					"name": "Health Check Performance Test",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Educational: Set up performance test data",
+									"pm.globals.set('test_start_time', Date.now());"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Educational: Performance testing for health endpoint",
+									"pm.test('Response time is under 200ms', function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(200);",
+									"});",
+									"",
+									"pm.test('Response time is consistent', function () {",
+									"    const responseTime = pm.response.responseTime;",
+									"    pm.globals.set('health_response_time', responseTime);",
+									"    ",
+									"    // Log response time for analysis",
+									"    console.log('Health check response time:', responseTime + 'ms');",
+									"});",
+									"",
+									"pm.test('API responds successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response size is reasonable', function () {",
+									"    const responseSize = pm.response.responseSize;",
+									"    pm.expect(responseSize).to.be.below(1000); // Under 1KB",
+									"    console.log('Response size:', responseSize + ' bytes');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Performance testing for health check endpoint focusing on response time and size."
+					},
+					"response": []
+				}
+			],
+			"description": "Basic performance testing scenarios."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Educational: Global pre-request script for setup",
+					"console.log('Running test against:', pm.environment.get('base_url'));",
+					"",
+					"// Set dynamic timestamp for this test run",
+					"pm.environment.set('test_timestamp', new Date().toISOString());"
+				],
+				"type": "text/javascript"
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"exec": [
+					"// Educational: Global test script for common validations",
+					"",
+					"// Log basic response information",
+					"console.log('Response Status:', pm.response.status);",
+					"console.log('Response Time:', pm.response.responseTime + 'ms');",
+					"",
+					"// Common test that applies to all endpoints",
+					"pm.test('Response time is reasonable (global)', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+					"});",
+					"",
+					"// Ensure no server errors (5xx status codes)",
+					"pm.test('No server errors (global)', function () {",
+					"    pm.expect(pm.response.code).to.be.below(500);",
+					"});"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "collection_version",
+			"value": "1.0.0",
+			"type": "string"
+		},
+		{
+			"key": "api_name",
+			"value": "HelloWorld API",
+			"type": "string"
+		}
+	]
+}
