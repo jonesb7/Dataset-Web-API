@@ -44,6 +44,47 @@ export const healthRoutes = Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *   options:
+ *     summary: CORS preflight request
+ *     description: |
+ *       Handles CORS preflight requests for cross-origin access.
+ *
+ *       **Educational Focus:**
+ *       - CORS (Cross-Origin Resource Sharing) allows web apps from different domains to access this API
+ *       - Browsers send OPTIONS requests before actual requests (preflight)
+ *       - Returns 204 No Content for allowed origins
+ *       - Returns 403 Forbidden for disallowed origins
+ *     tags: [Health]
+ *     parameters:
+ *       - in: header
+ *         name: Origin
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "http://localhost:3000"
+ *         description: Origin of the requesting application
+ *     responses:
+ *       204:
+ *         description: CORS preflight successful
+ *         headers:
+ *           Access-Control-Allow-Origin:
+ *             schema:
+ *               type: string
+ *             description: Allowed origin
+ *           Access-Control-Allow-Methods:
+ *             schema:
+ *               type: string
+ *             description: Allowed HTTP methods
+ *           Access-Control-Allow-Headers:
+ *             schema:
+ *               type: string
+ *             description: Allowed request headers
+ *           Access-Control-Allow-Credentials:
+ *             schema:
+ *               type: boolean
+ *             description: Whether credentials are allowed
+ *       403:
+ *         description: Origin not allowed by CORS policy
  */
 healthRoutes.get('/', getHealth);
 

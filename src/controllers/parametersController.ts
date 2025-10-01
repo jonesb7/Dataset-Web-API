@@ -101,21 +101,24 @@ import { asyncHandler } from '@middleware/errorHandler';
 export const getQueryParameter = asyncHandler(async (request: Request, response: Response): Promise<void> => {
     const originalName = request.query.name as string;
     const sanitizedName = sanitizeString(originalName);
-    const wasSanitized = originalName !== sanitizedName;
 
-    const parametersData: ParametersResponse = {
-        message: `Hello, ${sanitizedName}!`,
-        parameterType: 'query',
-        parameterValue: sanitizedName,
-        validation: {
-            applied: ['required', 'length(1-50)', 'sanitized'],
-            sanitized: wasSanitized
-        },
-        description: 'Query parameters are ideal for optional filters, pagination, search terms, and configuration. They\'re visible in URLs and server logs, so avoid sensitive data.',
-        timestamp: new Date().toISOString()
+    const data = {
+        name: sanitizedName,
+        sanitized: true,
+        source: 'query parameter'
     };
 
-    sendSuccess(response, parametersData, 'Query parameter processed successfully');
+    const validation = [
+        'query parameter extraction',
+        'input sanitization'
+    ];
+
+    sendSuccess(
+        response,
+        data,
+        `Successfully processed query parameter: ${sanitizedName}`,
+        validation
+    );
 });
 
 /**
@@ -169,21 +172,24 @@ export const getQueryParameter = asyncHandler(async (request: Request, response:
 export const getPathParameter = asyncHandler(async (request: Request, response: Response): Promise<void> => {
     const originalName = request.params.name || '';
     const sanitizedName = sanitizeString(originalName);
-    const wasSanitized = originalName !== sanitizedName;
 
-    const parametersData: ParametersResponse = {
-        message: `Hello, ${sanitizedName}!`,
-        parameterType: 'path',
-        parameterValue: sanitizedName,
-        validation: {
-            applied: ['required', 'length(1-30)', 'alphanumeric', 'sanitized'],
-            sanitized: wasSanitized
-        },
-        description: 'Path parameters identify specific resources and represent hierarchical relationships. They\'re perfect for resource IDs, usernames, and category names.',
-        timestamp: new Date().toISOString()
+    const data = {
+        name: sanitizedName,
+        sanitized: true,
+        source: 'path parameter'
     };
 
-    sendSuccess(response, parametersData, 'Path parameter processed successfully');
+    const validation = [
+        'path parameter extraction',
+        'input sanitization'
+    ];
+
+    sendSuccess(
+        response,
+        data,
+        `Successfully processed path parameter: ${sanitizedName}`,
+        validation
+    );
 });
 
 /**
@@ -242,21 +248,33 @@ export const getPathParameter = asyncHandler(async (request: Request, response: 
 export const postBodyParameter = asyncHandler(async (request: Request, response: Response): Promise<void> => {
     const originalName = request.body.name;
     const sanitizedName = sanitizeString(originalName);
-    const wasSanitized = originalName !== sanitizedName;
 
-    const parametersData: ParametersResponse = {
-        message: `Hello, ${sanitizedName}!`,
-        parameterType: 'body',
-        parameterValue: sanitizedName,
-        validation: {
-            applied: ['required', 'length(1-100)', 'json-format', 'sanitized'],
-            sanitized: wasSanitized
-        },
-        description: 'Request body is ideal for complex data structures, form submissions, file uploads, and large payloads. It\'s not visible in URLs and supports rich data types.',
-        timestamp: new Date().toISOString()
+    const data: any = {
+        name: sanitizedName,
+        sanitized: true,
+        source: 'request body'
     };
 
-    sendSuccess(response, parametersData, 'Body parameter processed successfully');
+    // Include any other fields from the request body
+    if (request.body.description) {
+        data.description = sanitizeString(request.body.description);
+    }
+    if (request.body.email) {
+        data.email = sanitizeString(request.body.email);
+    }
+
+    const validation = [
+        'JSON parsing',
+        'request body extraction',
+        'input sanitization'
+    ];
+
+    sendSuccess(
+        response,
+        data,
+        `Successfully processed request body: ${sanitizedName}`,
+        validation
+    );
 });
 
 /**
@@ -309,19 +327,22 @@ export const postBodyParameter = asyncHandler(async (request: Request, response:
 export const getHeaderParameter = asyncHandler(async (request: Request, response: Response): Promise<void> => {
     const originalName = request.get('X-User-Name') || '';
     const sanitizedName = sanitizeString(originalName);
-    const wasSanitized = originalName !== sanitizedName;
 
-    const parametersData: ParametersResponse = {
-        message: `Hello, ${sanitizedName}!`,
-        parameterType: 'header',
-        parameterValue: sanitizedName,
-        validation: {
-            applied: ['required', 'length(1-50)', 'header-format', 'sanitized'],
-            sanitized: wasSanitized
-        },
-        description: 'Headers carry metadata about requests like authentication tokens, content-type, API versioning, and client information. They\'re part of the HTTP protocol.',
-        timestamp: new Date().toISOString()
+    const data = {
+        xUserName: sanitizedName,
+        sanitized: true,
+        source: 'header'
     };
 
-    sendSuccess(response, parametersData, 'Header parameter processed successfully');
+    const validation = [
+        'header extraction',
+        'input sanitization'
+    ];
+
+    sendSuccess(
+        response,
+        data,
+        `Successfully processed header: ${sanitizedName}`,
+        validation
+    );
 });

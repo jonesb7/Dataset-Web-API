@@ -19,22 +19,37 @@ import { ApiResponse, ErrorResponse, PaginatedResponse, ErrorCodes } from '@/typ
  * @param response Express response object
  * @param data The data payload to return
  * @param message Optional success message
+ * @param validation Optional validation array for educational responses
  * @param statusCode HTTP status code (default: 200)
  */
 export const sendSuccess = <T>(
     response: Response,
     data: T,
     message?: string,
-    statusCode: number = 200
+    validation?: string[] | number,
+    statusCode?: number
 ): void => {
+    // Handle overloaded parameters (validation could be statusCode if it's a number)
+    let actualStatusCode = 200;
+    let actualValidation: string[] | undefined;
+
+    if (typeof validation === 'number') {
+        actualStatusCode = validation;
+        actualValidation = undefined;
+    } else {
+        actualValidation = validation;
+        actualStatusCode = statusCode || 200;
+    }
+
     const apiResponse: ApiResponse<T> = {
         success: true,
         data,
         ...(message && { message }),
+        ...(actualValidation && { validation: actualValidation }),
         timestamp: new Date().toISOString()
     };
 
-    response.status(statusCode).json(apiResponse);
+    response.status(actualStatusCode).json(apiResponse);
 };
 
 /**

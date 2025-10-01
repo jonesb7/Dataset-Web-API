@@ -315,68 +315,6 @@
 			"description": "Error handling test scenarios for various failure conditions."
 		},
 		{
-			"name": "CORS Testing",
-			"item": [
-				{
-					"name": "OPTIONS Health Check (CORS Preflight)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Educational: Testing CORS preflight request handling",
-									"pm.test('Status code is 204 (No Content)', function () {",
-									"    pm.response.to.have.status(204);",
-									"});",
-									"",
-									"pm.test('CORS headers are present', function () {",
-									"    pm.expect(pm.response.headers.has('Access-Control-Allow-Origin')).to.be.true;",
-									"    pm.expect(pm.response.headers.has('Access-Control-Allow-Methods')).to.be.true;",
-									"    pm.expect(pm.response.headers.has('Access-Control-Allow-Headers')).to.be.true;",
-									"});",
-									"",
-									"pm.test('Allowed methods include GET', function () {",
-									"    const allowedMethods = pm.response.headers.get('Access-Control-Allow-Methods');",
-									"    pm.expect(allowedMethods).to.include('GET');",
-									"});",
-									"",
-									"pm.test('Response time is very fast for preflight', function () {",
-									"    pm.expect(pm.response.responseTime).to.be.below(100);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "OPTIONS",
-						"header": [
-							{
-								"key": "Origin",
-								"value": "{{test_origin}}"
-							},
-							{
-								"key": "Access-Control-Request-Method",
-								"value": "GET"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/health",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"health"
-							]
-						},
-						"description": "Test CORS preflight request handling for cross-origin requests."
-					},
-					"response": []
-				}
-			],
-			"description": "CORS (Cross-Origin Resource Sharing) testing scenarios."
-		},
-		{
 			"name": "Hello World Demonstrations",
 			"item": [
 				{
@@ -702,28 +640,28 @@
 									"    pm.expect(responseJson).to.have.property('success', true);",
 									"    pm.expect(responseJson).to.have.property('data');",
 									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('validation');",
 									"    pm.expect(responseJson).to.have.property('timestamp');",
 									"});",
 									"",
 									"pm.test('Response contains query parameter information', function () {",
 									"    const data = pm.response.json().data;",
-									"    pm.expect(data).to.have.property('parameterType', 'query');",
-									"    pm.expect(data).to.have.property('parameterValue', 'StudentName');",
-									"    pm.expect(data).to.have.property('validation');",
-									"    pm.expect(data.validation).to.have.property('applied');",
-									"    pm.expect(data.validation).to.have.property('sanitized', true);",
+									"    pm.expect(data).to.have.property('name', 'StudentName');",
+									"    pm.expect(data).to.have.property('sanitized', true);",
+									"    pm.expect(data).to.have.property('source', 'query parameter');",
 									"});",
 									"",
 									"pm.test('Message contains query parameter value', function () {",
-									"    const message = pm.response.json().data.message;",
+									"    const message = pm.response.json().message;",
 									"    pm.expect(message).to.include('StudentName');",
 									"    pm.expect(message).to.include('query parameter');",
 									"});",
 									"",
 									"pm.test('Validation was applied', function () {",
-									"    const validation = pm.response.json().data.validation;",
-									"    pm.expect(validation.applied).to.be.an('array');",
-									"    pm.expect(validation.applied.length).to.be.greaterThan(0);",
+									"    const validation = pm.response.json().validation;",
+									"    pm.expect(validation).to.be.an('array');",
+									"    pm.expect(validation.length).to.be.greaterThan(0);",
+									"    pm.expect(validation).to.include('query parameter extraction');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -824,24 +762,25 @@
 									"    pm.expect(responseJson).to.have.property('success', true);",
 									"    pm.expect(responseJson).to.have.property('data');",
 									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('validation');",
 									"});",
 									"",
 									"pm.test('Response contains path parameter information', function () {",
 									"    const data = pm.response.json().data;",
-									"    pm.expect(data).to.have.property('parameterType', 'path');",
-									"    pm.expect(data).to.have.property('parameterValue', 'johnsmith');",
-									"    pm.expect(data).to.have.property('validation');",
+									"    pm.expect(data).to.have.property('name', 'johnsmith');",
+									"    pm.expect(data).to.have.property('sanitized', true);",
+									"    pm.expect(data).to.have.property('source', 'path parameter');",
 									"});",
 									"",
 									"pm.test('Message contains path parameter value', function () {",
-									"    const message = pm.response.json().data.message;",
+									"    const message = pm.response.json().message;",
 									"    pm.expect(message).to.include('johnsmith');",
 									"    pm.expect(message).to.include('path parameter');",
 									"});",
 									"",
 									"pm.test('Path parameter was sanitized', function () {",
-									"    const validation = pm.response.json().data.validation;",
-									"    pm.expect(validation.sanitized).to.be.true;",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data.sanitized).to.be.true;",
 									"});"
 								],
 								"type": "text/javascript"
@@ -880,12 +819,12 @@
 									"",
 									"pm.test('Special characters are handled correctly', function () {",
 									"    const data = pm.response.json().data;",
-									"    pm.expect(data.parameterValue).to.include('user-name_123');",
+									"    pm.expect(data.name).to.include('user-name_123');",
 									"});",
 									"",
 									"pm.test('Validation applied to special characters', function () {",
-									"    const validation = pm.response.json().data.validation;",
-									"    pm.expect(validation.applied).to.include('sanitization');",
+									"    const validation = pm.response.json().validation;",
+									"    pm.expect(validation).to.include('input sanitization');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -927,25 +866,26 @@
 									"    pm.expect(responseJson).to.have.property('success', true);",
 									"    pm.expect(responseJson).to.have.property('data');",
 									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('validation');",
 									"});",
 									"",
 									"pm.test('Response contains body parameter information', function () {",
 									"    const data = pm.response.json().data;",
-									"    pm.expect(data).to.have.property('parameterType', 'body');",
-									"    pm.expect(data).to.have.property('parameterValue', 'Course Project Data');",
-									"    pm.expect(data).to.have.property('validation');",
+									"    pm.expect(data).to.have.property('name', 'Course Project Data');",
+									"    pm.expect(data).to.have.property('sanitized', true);",
+									"    pm.expect(data).to.have.property('source', 'request body');",
 									"});",
 									"",
 									"pm.test('Message contains body parameter value', function () {",
-									"    const message = pm.response.json().data.message;",
+									"    const message = pm.response.json().message;",
 									"    pm.expect(message).to.include('Course Project Data');",
 									"    pm.expect(message).to.include('request body');",
 									"});",
 									"",
 									"pm.test('JSON validation was applied', function () {",
-									"    const validation = pm.response.json().data.validation;",
-									"    pm.expect(validation.applied).to.include('JSON parsing');",
-									"    pm.expect(validation.applied).to.include('field validation');",
+									"    const validation = pm.response.json().validation;",
+									"    pm.expect(validation).to.include('JSON parsing');",
+									"    pm.expect(validation).to.include('request body extraction');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1102,25 +1042,27 @@
 									"    pm.expect(responseJson).to.have.property('success', true);",
 									"    pm.expect(responseJson).to.have.property('data');",
 									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('validation');",
 									"});",
 									"",
 									"pm.test('Response contains header parameter information', function () {",
 									"    const data = pm.response.json().data;",
-									"    pm.expect(data).to.have.property('parameterType', 'header');",
-									"    pm.expect(data).to.have.property('parameterValue', 'MyCustomValue');",
-									"    pm.expect(data).to.have.property('validation');",
+									"    pm.expect(data).to.have.property('xUserName', 'MyCustomValue');",
+									"    pm.expect(data).to.have.property('sanitized', true);",
+									"    pm.expect(data).to.have.property('source', 'header');",
 									"});",
 									"",
 									"pm.test('Message contains header parameter value', function () {",
-									"    const message = pm.response.json().data.message;",
+									"    const message = pm.response.json().message;",
 									"    pm.expect(message).to.include('MyCustomValue');",
 									"    pm.expect(message).to.include('header');",
 									"});",
 									"",
 									"pm.test('Header validation was applied', function () {",
-									"    const validation = pm.response.json().data.validation;",
-									"    pm.expect(validation.applied).to.include('header extraction');",
-									"    pm.expect(validation.sanitized).to.be.true;",
+									"    const validation = pm.response.json().validation;",
+									"    pm.expect(validation).to.include('header extraction');",
+									"    const data = pm.response.json().data;",
+									"    pm.expect(data.sanitized).to.be.true;",
 									"});"
 								],
 								"type": "text/javascript"

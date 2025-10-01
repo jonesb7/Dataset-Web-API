@@ -29,7 +29,8 @@ export const corsMiddleware = cors({
         }
 
         // Reject requests from unauthorized origins
-        callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+        // Return false (not Error) to properly reject with 403
+        callback(null, false);
     },
 
     // Allowed HTTP methods

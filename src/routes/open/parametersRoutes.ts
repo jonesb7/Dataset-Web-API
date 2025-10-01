@@ -62,34 +62,26 @@ export const parametersRoutes = Router();
  *                 - $ref: '#/components/schemas/ApiResponse'
  *                 - type: object
  *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Successfully processed query parameter: StudentName"
  *                     data:
  *                       type: object
  *                       properties:
- *                         message:
- *                           type: string
- *                           example: "Hello, StudentName! This came from a query parameter."
- *                         parameterType:
- *                           type: string
- *                           example: "query"
- *                         parameterValue:
+ *                         name:
  *                           type: string
  *                           example: "StudentName"
- *                         validation:
- *                           type: object
- *                           properties:
- *                             applied:
- *                               type: array
- *                               items:
- *                                 type: string
- *                               example: ["required", "length", "sanitization"]
- *                             sanitized:
- *                               type: boolean
- *                               example: true
- *                         description:
+ *                         sanitized:
+ *                           type: boolean
+ *                           example: true
+ *                         source:
  *                           type: string
- *                         timestamp:
- *                           type: string
- *                           format: date-time
+ *                           example: "query parameter"
+ *                     validation:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["query parameter extraction", "input sanitization"]
  *       400:
  *         description: Validation error
  *         content:
@@ -123,18 +115,69 @@ parametersRoutes.get('/query',
  * /parameters/path/{name}:
  *   get:
  *     summary: Path parameter demonstration
- *     description: Educational endpoint showing path parameter extraction and validation
+ *     description: |
+ *       Educational endpoint showing path parameter extraction and validation.
+ *
+ *       **Educational Focus:**
+ *       - Path parameters are part of the URL path itself
+ *       - Used for identifying specific resources
+ *       - Required parameters that define the resource being accessed
+ *       - URL-encoded special characters are automatically decoded
  *     tags: [Parameters]
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 30
+ *           example: "StudentName"
+ *         description: Name parameter embedded in URL path
+ *     responses:
+ *       200:
+ *         description: Path parameter processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Successfully processed path parameter: StudentName"
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         name:
+ *                           type: string
+ *                           example: "StudentName"
+ *                         sanitized:
+ *                           type: boolean
+ *                           example: true
+ *                         source:
+ *                           type: string
+ *                           example: "path parameter"
+ *                     validation:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["path parameter extraction", "input sanitization"]
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 parametersRoutes.get('/path/:name',
     validateRequest([
         param('name')
             .notEmpty()
             .withMessage('Name path parameter is required')
-            .isLength({ min: 1, max: 30 })
-            .withMessage('Name must be between 1 and 30 characters')
-            .matches(/^[a-zA-Z0-9\s]+$/)
-            .withMessage('Name must contain only letters, numbers, and spaces')
+            .isLength({ min: 1, max: 100 })
+            .withMessage('Name must be between 1 and 100 characters')
             .customSanitizer((value: string) => sanitizeString(value))
             .trim()
     ]),
@@ -146,8 +189,72 @@ parametersRoutes.get('/path/:name',
  * /parameters/body:
  *   post:
  *     summary: Request body parameter demonstration
- *     description: Educational endpoint showing JSON body parameter extraction and validation
+ *     description: |
+ *       Educational endpoint showing JSON body parameter extraction and validation.
+ *
+ *       **Educational Focus:**
+ *       - Body parameters are sent in the HTTP request body
+ *       - Used for complex data structures and large payloads
+ *       - Requires Content-Type: application/json header
+ *       - JSON parsing occurs before validation
  *     tags: [Parameters]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *                 example: "StudentName"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "student@uw.edu"
+ *     responses:
+ *       200:
+ *         description: Request body processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Successfully processed request body parameters"
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         name:
+ *                           type: string
+ *                           example: "StudentName"
+ *                         email:
+ *                           type: string
+ *                           example: "student@uw.edu"
+ *                         sanitized:
+ *                           type: boolean
+ *                           example: true
+ *                         source:
+ *                           type: string
+ *                           example: "request body"
+ *                     validation:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["JSON parsing", "request body extraction", "input sanitization"]
+ *       400:
+ *         description: Validation error or invalid JSON
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 parametersRoutes.post('/body',
     requireJsonContent,
@@ -168,8 +275,69 @@ parametersRoutes.post('/body',
  * /parameters/headers:
  *   get:
  *     summary: Header parameter demonstration
- *     description: Educational endpoint showing HTTP header parameter extraction and validation
+ *     description: |
+ *       Educational endpoint showing HTTP header parameter extraction and validation.
+ *
+ *       **Educational Focus:**
+ *       - Headers provide metadata about the request
+ *       - Custom headers typically start with X- prefix
+ *       - Used for authentication, content negotiation, and custom data
+ *       - Headers are case-insensitive but conventionally use kebab-case
  *     tags: [Parameters]
+ *     parameters:
+ *       - in: header
+ *         name: X-Custom-Header
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "CustomValue"
+ *         description: Custom header for demonstration
+ *       - in: header
+ *         name: X-User-Agent
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "MyApp/1.0"
+ *         description: User agent information
+ *     responses:
+ *       200:
+ *         description: Header parameters processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Successfully processed header parameters"
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         customHeader:
+ *                           type: string
+ *                           example: "CustomValue"
+ *                         userAgent:
+ *                           type: string
+ *                           example: "MyApp/1.0"
+ *                         sanitized:
+ *                           type: boolean
+ *                           example: true
+ *                         source:
+ *                           type: string
+ *                           example: "header"
+ *                     validation:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["header extraction", "input sanitization"]
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 parametersRoutes.get('/headers',
     validateRequest([

@@ -80,17 +80,6 @@ helloRoutes.get('/', getHello);
  *       - Not idempotent (repeated requests may create multiple resources)
  *       - Used for creating new resources or submitting data
  *     tags: [Hello]
- *     requestBody:
- *       description: Optional message content
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 example: "Custom hello message"
- *                 description: Custom message to include in response
  *     responses:
  *       201:
  *         description: Hello message created successfully
@@ -137,17 +126,6 @@ helloRoutes.post('/', postHello);
  *       - Replaces entire resource (or creates if doesn't exist)
  *       - Multiple identical requests have the same result
  *     tags: [Hello]
- *     requestBody:
- *       description: Message content for replacement
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 example: "Replaced hello message"
- *                 description: Message to replace existing content
  *     responses:
  *       200:
  *         description: Hello message replaced successfully
@@ -188,17 +166,6 @@ helloRoutes.put('/', putHello);
  *       - More efficient than PUT for small changes
  *       - May or may not be idempotent depending on implementation
  *     tags: [Hello]
- *     requestBody:
- *       description: Partial update data
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 example: "Partially updated message"
- *                 description: Updated message content
  *     responses:
  *       200:
  *         description: Hello message updated successfully
