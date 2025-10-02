@@ -198,3 +198,6 @@ lib/
 
 # Runtime configuration files
 .env
+
+# AI assistant files
+ai/
