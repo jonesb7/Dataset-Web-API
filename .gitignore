@@ -199,5 +199,5 @@ lib/
 # Runtime configuration files
 .env
 
-# AI assistant files
-ai/
+# AI assistant private files (not tracked)
+ai.prof/
