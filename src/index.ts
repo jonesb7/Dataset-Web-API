@@ -9,6 +9,9 @@
  * @see {@link ../docs/environment-configuration.md} for configuration details
  */
 
+// Load environment variables from .env file (must be first)
+import 'dotenv/config';
+
 import { createApp } from '@/app';
 import { config } from '@utilities/envConfig';
 
