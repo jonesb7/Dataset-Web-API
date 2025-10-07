@@ -54,10 +54,11 @@ By studying this documentation alongside the codebase, students will gain:
 - TypeScript type safety and interface design
 - Code organization and maintainability patterns
 - Modern tooling and development workflows
+- Module system and import/export patterns
 
-**📚 Study:** [TypeScript Patterns](/docs/typescript-patterns.md), [Environment Configuration](/docs/environment-configuration.md)
-**🔧 Practice:** Review the [Complete API Reference](/docs/API_DOCUMENTATION.md)
-**✋ Hands-On:** Test header parameters: `GET /parameters/headers` with custom headers
+**📚 Study:** [Import/Export Patterns](/docs/import-export-patterns.md), [TypeScript Patterns](/docs/typescript-patterns.md), [Environment Configuration](/docs/environment-configuration.md)
+**🔧 Practice:** Examine barrel exports in `src/types/index.ts` and `src/controllers/index.ts`
+**✋ Hands-On:** Create a new utility module and export it using named exports
 
 ## 🔗 Integration with Codebase
 
@@ -113,6 +114,7 @@ This project demonstrates key concepts through practical implementation:
 
 **Development & Architecture:**
 - [Development Workflow](http://localhost:8000/docs/development-workflow.md) - TypeScript compilation, build process, and tooling
+- [Import/Export Patterns](http://localhost:8000/docs/import-export-patterns.md) - Module system, exports, and imports
 - [Node.js & Express Architecture](http://localhost:8000/docs/node-express-architecture.md) - MVC patterns and middleware
 - [TypeScript Patterns](http://localhost:8000/docs/typescript-patterns.md) - Type safety and patterns
 - [Error Handling Patterns](http://localhost:8000/docs/error-handling-patterns.md) - Error management strategies
