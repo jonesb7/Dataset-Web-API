@@ -11,22 +11,26 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * Configure marked with syntax highlighting
+ * Configure marked with syntax highlighting using the modern renderer API
  */
-marked.setOptions({
-    highlight: function(code, lang) {
-        if (lang && hljs.getLanguage(lang)) {
-            try {
-                return hljs.highlight(code, { language: lang }).value;
-            } catch (err) {
-                // Fall back to no highlighting
-            }
-        }
-        return hljs.highlightAuto(code).value;
-    },
-    langPrefix: 'hljs language-',
+marked.use({
     breaks: true,
-    gfm: true
+    gfm: true,
+    renderer: {
+        code(token: { text: string; lang?: string }): string {
+            const code = token.text;
+            const language = token.lang;
+
+            if (language && hljs.getLanguage(language)) {
+                try {
+                    return `<pre><code class="hljs language-${language}">${hljs.highlight(code, { language }).value}</code></pre>`;
+                } catch (err) {
+                    // Fall back to auto-detection
+                }
+            }
+            return `<pre><code class="hljs">${hljs.highlightAuto(code).value}</code></pre>`;
+        }
+    }
 });
 
 /**

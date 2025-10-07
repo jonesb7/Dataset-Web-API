@@ -22,8 +22,8 @@ export interface ErrorResponse {
     code: string;
     /** ISO timestamp of when the error occurred */
     timestamp: string;
-    /** Optional additional error details for debugging */
-    details?: any;
+    /** Optional additional error details for debugging (type must be checked before use) */
+    details?: unknown;
     /** Optional field-specific validation errors */
     validationErrors?: ValidationError[];
 }
@@ -39,8 +39,8 @@ export interface ValidationError {
     field: string;
     /** Human-readable validation error message */
     message: string;
-    /** The value that failed validation */
-    value?: any;
+    /** The value that failed validation (type must be checked before use) */
+    value?: unknown;
 }
 
 /**

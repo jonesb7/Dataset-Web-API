@@ -10,7 +10,6 @@
 
 import { Request, Response } from 'express';
 import { sendSuccess } from '@utilities/responseUtils';
-import { ParametersResponse } from '@/types';
 import { sanitizeString } from '@utilities/validationUtils';
 import { asyncHandler } from '@middleware/errorHandler';
 
@@ -249,7 +248,14 @@ export const postBodyParameter = asyncHandler(async (request: Request, response:
     const originalName = request.body.name;
     const sanitizedName = sanitizeString(originalName);
 
-    const data: any = {
+    // Type-safe data object with explicit structure
+    const data: {
+        name: string;
+        sanitized: boolean;
+        source: string;
+        description?: string;
+        email?: string;
+    } = {
         name: sanitizedName,
         sanitized: true,
         source: 'request body'

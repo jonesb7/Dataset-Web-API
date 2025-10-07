@@ -14,9 +14,9 @@
  * Provides consistent structure for API responses with typed data payload,
  * success indicators, and optional metadata for client applications.
  *
- * @template T The type of data being returned in the response
+ * @template T The type of data being returned in the response (defaults to unknown for type safety)
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
     /** Indicates successful completion of the requested operation */
     success: boolean;
     /** The actual data payload returned by the API endpoint */
@@ -105,9 +105,9 @@ export interface HealthResponse {
  * Standardized pagination structure for endpoints that return collections
  * of data, enabling efficient data transfer and client-side pagination.
  *
- * @template T The type of items in the paginated collection
+ * @template T The type of items in the paginated collection (defaults to unknown for type safety)
  */
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
     /** Array of items for the current page */
     items: T[];
     /** Pagination metadata for client navigation */
