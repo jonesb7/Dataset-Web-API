@@ -13,6 +13,515 @@ Understanding how to organize, import, and export code is fundamental to buildin
 
 ---
 
+## What Can Be Exported and Imported?
+
+Before diving into module systems, let's understand what you can actually export and import. JavaScript and TypeScript allow you to export almost anything, but some patterns work better than others.
+
+### Primitive Values (Constants)
+
+Export simple values like strings, numbers, and booleans.
+
+**Syntax:**
+```typescript
+// config.ts
+export const API_VERSION = '1.0.0';
+export const PORT = 8000;
+export const IS_PRODUCTION = false;
+export const MAX_RETRIES = 3;
+```
+
+**Importing:**
+```typescript
+import { API_VERSION, PORT } from './config';
+
+console.log(`API v${API_VERSION} running on port ${PORT}`);
+```
+
+**Real Example from This Project:**
+```typescript
+// src/core/utilities/envConfig.ts exports configuration values
+export const config = {
+    PORT: 8000,
+    NODE_ENV: 'development',
+    // ...
+};
+```
+
+**When to use:**
+- ✅ Application-wide constants
+- ✅ Configuration values
+- ✅ Magic numbers that need names
+- ⚠️ Avoid mutable primitives (use functions to get current values instead)
+
+---
+
+### Functions
+
+Export both arrow functions and traditional function declarations.
+
+**Arrow Functions:**
+```typescript
+// math.ts
+export const add = (a: number, b: number): number => a + b;
+export const multiply = (a: number, b: number): number => a * b;
+export const divide = (a: number, b: number): number => {
+    if (b === 0) throw new Error('Division by zero');
+    return a / b;
+};
+```
+
+**Function Declarations:**
+```typescript
+// helpers.ts
+export function formatDate(date: Date): string {
+    return date.toISOString();
+}
+
+export function capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+```
+
+**Importing:**
+```typescript
+import { add, multiply } from './math';
+import { formatDate, capitalize } from './helpers';
+
+const result = add(5, 3);
+const now = formatDate(new Date());
+```
+
+**Real Examples from This Project:**
+```typescript
+// src/core/utilities/responseUtils.ts
+export const sendSuccess = <T>(response: Response, data: T, ...): void => {
+    // Send standardized success response
+};
+
+export const sendError = (response: Response, statusCode: number, ...): void => {
+    // Send standardized error response
+};
+```
+
+**When to use:**
+- ✅ Utility functions (validation, formatting, calculations)
+- ✅ Helper functions used across multiple files
+- ✅ Pure functions without side effects
+- ✅ Middleware functions in Express
+
+---
+
+### Classes
+
+Export classes for object-oriented patterns.
+
+**Syntax:**
+```typescript
+// errorHandler.ts
+export class AppError extends Error {
+    public statusCode: number;
+    public errorCode: string;
+
+    constructor(message: string, statusCode: number, errorCode: string) {
+        super(message);
+        this.statusCode = statusCode;
+        this.errorCode = errorCode;
+    }
+}
+
+export class ValidationError extends AppError {
+    constructor(message: string) {
+        super(message, 400, 'VALIDATION_ERROR');
+    }
+}
+```
+
+**Importing:**
+```typescript
+import { AppError, ValidationError } from './errorHandler';
+
+throw new AppError('Not found', 404, 'NOT_FOUND');
+throw new ValidationError('Invalid email');
+```
+
+**Real Example from This Project:**
+```typescript
+// src/core/middleware/errorHandler.ts
+export class AppError extends Error {
+    public statusCode: number;
+    public errorCode: ErrorCodes;
+    public isOperational: boolean;
+    // ...
+}
+```
+
+**When to use:**
+- ✅ Custom error classes
+- ✅ Service classes (UserService, DatabaseService)
+- ✅ Data models
+- ✅ Stateful components
+- ⚠️ Consider functions over classes for simpler use cases
+
+---
+
+### Interfaces & Types (TypeScript Only)
+
+Export type definitions for type safety across your application.
+
+**Interfaces:**
+```typescript
+// types/user.ts
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    createdAt: Date;
+}
+
+export interface CreateUserRequest {
+    name: string;
+    email: string;
+}
+```
+
+**Type Aliases:**
+```typescript
+// types/responses.ts
+export type ResponseStatus = 'success' | 'error' | 'pending';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+export type ApiResponse<T> = {
+    success: boolean;
+    data: T;
+    timestamp: string;
+};
+```
+
+**Importing:**
+```typescript
+import { User, CreateUserRequest } from './types/user';
+import { ResponseStatus, ApiResponse } from './types/responses';
+
+const user: User = { id: '1', name: 'Alice', email: 'alice@example.com', createdAt: new Date() };
+const status: ResponseStatus = 'success';
+```
+
+**Real Examples from This Project:**
+```typescript
+// src/types/apiTypes.ts
+export interface ApiResponse<T> {
+    success: boolean;
+    data: T;
+    message?: string;
+    timestamp: string;
+}
+
+export interface HelloResponse {
+    message: string;
+    method: string;
+    description: string;
+    timestamp: string;
+}
+```
+
+**When to use:**
+- ✅ API request/response shapes
+- ✅ Data structures used across files
+- ✅ Function parameter types
+- ✅ Return types for complex data
+- ✅ Use `interface` for objects, `type` for unions/primitives
+
+---
+
+### Objects (Configuration, Constants)
+
+Export object literals for grouped configuration or constants.
+
+**Simple Objects:**
+```typescript
+// config.ts
+export const apiConfig = {
+    baseUrl: 'http://localhost:8000',
+    timeout: 5000,
+    retries: 3
+};
+
+export const errorMessages = {
+    notFound: 'Resource not found',
+    unauthorized: 'Authentication required',
+    serverError: 'Internal server error'
+};
+```
+
+**Objects with Methods:**
+```typescript
+// logger.ts
+export const logger = {
+    info: (message: string) => console.log(`[INFO] ${message}`),
+    error: (message: string) => console.error(`[ERROR] ${message}`),
+    warn: (message: string) => console.warn(`[WARN] ${message}`)
+};
+```
+
+**Importing:**
+```typescript
+import { apiConfig, errorMessages } from './config';
+import { logger } from './logger';
+
+logger.info(`Starting API at ${apiConfig.baseUrl}`);
+```
+
+**Real Example from This Project:**
+```typescript
+// src/core/utilities/responseUtils.ts
+export const ErrorResponses = {
+    badRequest: (response: Response, message: string = 'Bad Request', details?: any): void => {
+        sendError(response, 400, message, ErrorCodes.BAD_REQUEST, details);
+    },
+    unauthorized: (response: Response, message: string = 'Unauthorized'): void => {
+        sendError(response, 401, message, ErrorCodes.UNAUTHORIZED);
+    },
+    // ... more error helpers
+};
+```
+
+**When to use:**
+- ✅ Configuration objects
+- ✅ Grouped utility functions
+- ✅ Constants that belong together
+- ⚠️ Avoid large mutable objects (hard to track changes)
+
+---
+
+### Arrays (Lists of Constants)
+
+Export arrays of related constants or configuration values.
+
+**Syntax:**
+```typescript
+// constants.ts
+export const ALLOWED_HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+
+export const VALID_STATUS_CODES = [200, 201, 204, 400, 401, 403, 404, 500];
+
+export const SUPPORTED_LANGUAGES = ['en', 'es', 'fr', 'de'];
+```
+
+**Importing:**
+```typescript
+import { ALLOWED_HTTP_METHODS, VALID_STATUS_CODES } from './constants';
+
+if (ALLOWED_HTTP_METHODS.includes(method)) {
+    // Process request
+}
+```
+
+**Real Example from This Project:**
+```typescript
+// The project uses arrays in configuration
+// src/core/utilities/envConfig.ts
+export const config = {
+    CORS_ORIGINS: ['http://localhost:3000', 'http://localhost:8000'],
+    // ...
+};
+```
+
+**When to use:**
+- ✅ Whitelist/blacklist values
+- ✅ Allowed options for validation
+- ✅ Menu items, navigation links
+- ✅ Use `as const` for TypeScript to infer literal types
+
+---
+
+### Enums (TypeScript)
+
+Export enums for a set of named constants.
+
+**Syntax:**
+```typescript
+// errorCodes.ts
+export enum ErrorCodes {
+    BAD_REQUEST = 'BAD_REQUEST',
+    UNAUTHORIZED = 'UNAUTHORIZED',
+    FORBIDDEN = 'FORBIDDEN',
+    NOT_FOUND = 'NOT_FOUND',
+    INTERNAL_ERROR = 'INTERNAL_ERROR'
+}
+
+export enum HttpStatus {
+    OK = 200,
+    CREATED = 201,
+    BAD_REQUEST = 400,
+    NOT_FOUND = 404,
+    SERVER_ERROR = 500
+}
+```
+
+**Importing:**
+```typescript
+import { ErrorCodes, HttpStatus } from './errorCodes';
+
+throw new AppError('Not found', HttpStatus.NOT_FOUND, ErrorCodes.NOT_FOUND);
+```
+
+**Real Example from This Project:**
+```typescript
+// src/types/errorTypes.ts
+export enum ErrorCodes {
+    BAD_REQUEST = 'BAD_REQUEST',
+    UNAUTHORIZED = 'UNAUTHORIZED',
+    FORBIDDEN = 'FORBIDDEN',
+    NOT_FOUND = 'NOT_FOUND',
+    INVALID_REQUEST_FORMAT = 'INVALID_REQUEST_FORMAT',
+    INTERNAL_ERROR = 'INTERNAL_ERROR',
+    SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE'
+}
+```
+
+**When to use:**
+- ✅ Error codes
+- ✅ Status values
+- ✅ State machine states
+- ⚠️ Consider string literal unions (`type Status = 'active' | 'inactive'`) for simpler cases
+
+---
+
+### Mixed Exports (Multiple Types)
+
+You can export different types from the same file.
+
+**Syntax:**
+```typescript
+// userService.ts
+export interface User {
+    id: string;
+    name: string;
+}
+
+export const DEFAULT_USER: User = {
+    id: '0',
+    name: 'Guest'
+};
+
+export const createUser = (name: string): User => ({
+    id: Math.random().toString(),
+    name
+});
+
+export class UserService {
+    getUser(id: string): User | null {
+        // Implementation
+        return null;
+    }
+}
+```
+
+**Importing:**
+```typescript
+import { User, DEFAULT_USER, createUser, UserService } from './userService';
+
+const user: User = createUser('Alice');
+const service = new UserService();
+```
+
+**Real Example from This Project:**
+```typescript
+// src/core/middleware/errorHandler.ts exports multiple things:
+export class AppError extends Error { /* ... */ }
+export const errorHandler = (error: Error, ...) => { /* ... */ };
+export const asyncHandler = (handler: Function) => { /* ... */ };
+export const notFoundHandler = (request: Request, ...) => { /* ... */ };
+```
+
+**When to use:**
+- ✅ Related functionality in one file
+- ✅ Types alongside functions that use them
+- ✅ Utilities with their configuration
+- ⚠️ Keep files focused - if it grows too large, split it up
+
+---
+
+### What You CANNOT Export
+
+Some things cannot be exported directly:
+
+**❌ Local Variables (without export keyword):**
+```typescript
+const localValue = 42;  // NOT exported
+// Other files cannot import this
+```
+
+**❌ Statements (only declarations):**
+```typescript
+export if (condition) { }  // ❌ Syntax error
+export for (let i = 0; i < 10; i++) { }  // ❌ Syntax error
+```
+
+**❌ Multiple default exports:**
+```typescript
+export default function foo() { }
+export default function bar() { }  // ❌ Only one default allowed
+```
+
+---
+
+### Best Practices for What to Export
+
+**✅ Do:**
+```typescript
+// Export related, cohesive functionality
+export const sendEmail = (to: string, subject: string) => { /* ... */ };
+export const validateEmail = (email: string) => { /* ... */ };
+export interface EmailConfig { /* ... */ }
+```
+
+**❌ Avoid:**
+```typescript
+// Exporting unrelated things
+export const sendEmail = () => { /* ... */ };
+export const calculateTax = () => { /* ... */ };  // Unrelated
+export const formatDate = () => { /* ... */ };    // Unrelated
+```
+
+**✅ Do:**
+```typescript
+// Export const for immutability
+export const API_KEY = 'your-key';
+```
+
+**❌ Avoid:**
+```typescript
+// Exporting mutable values (hard to track)
+export let counter = 0;  // Can be changed by importers!
+```
+
+**✅ Do:**
+```typescript
+// Use clear, descriptive names
+export const validateUserEmail = (email: string) => { /* ... */ };
+```
+
+**❌ Avoid:**
+```typescript
+// Unclear names
+export const v = (e: string) => { /* ... */ };  // What does this do?
+```
+
+---
+
+### Summary: Export Checklist
+
+When deciding what to export, ask:
+
+1. **Is this used in multiple files?** → Export it
+2. **Is this an implementation detail?** → Don't export it (keep it private)
+3. **Does this belong in this file?** → If not, move it first
+4. **Is the name clear and descriptive?** → Rename if needed
+5. **Is this mutable?** → Prefer exporting functions over mutable values
+
+---
+
 ## ES6 Modules vs CommonJS
 
 JavaScript has two main module systems. Understanding both helps you work with different codebases and tools.
