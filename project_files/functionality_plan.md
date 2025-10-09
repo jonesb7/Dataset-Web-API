@@ -1,15 +1,27 @@
-# Web API Functionality Plan
+# Functionality Plan
 
-Goal: Provide a REST API to explore movies released in the last 30 years.
+## Overview
+Our Movies API provides access to a dataset of movies from the past 30 years.  
+It is designed to demonstrate core REST API concepts with database integration.
 
-Users:
-- Students/instructors
-- Anyone searching by year, title, or genre
+## Features Implemented
+- **List Movies**:  
+  Endpoint: `GET /api/movies`  
+  Supports filters:
+    - `year`: filter by release year
+    - `title`: partial title search
+    - `genre`: filter by genre  
+      Also supports pagination with `page` and `pageSize`.
 
-Endpoints:
-- GET /api/movies?page=1&pageSize=25
-- GET /api/movies?year=2021
-- GET /api/movies?title=ring
-- GET /api/movies?genre=Horror
-- GET /api/movies/{id}
-- GET /api/movies/stats?by=year|genre
+- **Movie Details**:  
+  Endpoint: `GET /api/movies/:id`  
+  Fetches a single movie by its ID.
+
+- **Statistics**:  
+  Endpoint: `GET /api/movies/stats?by=year|genre`  
+  Aggregates counts of movies by release year or by genre.
+
+## Future Enhancements
+- Add support for more filters (runtime, vote_average).
+- Add POST/PUT/DELETE endpoints for creating or updating movies.
+- Deploy to a public host so others can query the API.
