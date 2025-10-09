@@ -16,6 +16,8 @@ import { loggerMiddleware } from '@middleware/logger';
 import { errorHandler } from '@middleware/errorHandler';
 import { routes } from '@/routes';
 import { swaggerSpec, swaggerUiOptions } from '@/core/config/swagger';
+import moviesRouter from './routes/movies.routes';
+
 
 /**
  * Create and configure Express application with complete middleware stack
@@ -47,6 +49,10 @@ export const createApp = (): Express => {
 
     // API routes
     app.use('/', routes);
+
+    // Movies API
+    app.use('/api/movies', moviesRouter);
+
 
     // Global error handling middleware (must be last)
     app.use(errorHandler);
