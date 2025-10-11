@@ -15,9 +15,12 @@ import { corsMiddleware } from '@middleware/cors';
 import { loggerMiddleware } from '@middleware/logger';
 import { errorHandler } from '@middleware/errorHandler';
 import { routes } from '@/routes';
-import { swaggerSpec, swaggerUiOptions } from '@/core/config/swagger';
+//import { swaggerSpec, swaggerUiOptions } from '@/core/config/swagger';
 import moviesRouter from './routes/movies.routes';
 
+// ✅ Added imports for reading your custom Swagger YAML
+import fs from 'fs';
+import yaml from 'yaml';
 
 /**
  * Create and configure Express application with complete middleware stack
@@ -44,15 +47,31 @@ export const createApp = (): Express => {
     // Logging middleware (after parsing, before routes)
     app.use(loggerMiddleware);
 
-    // API Documentation with Swagger UI
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+    // =======================
+    // 📚 API Documentation
+    // =======================
 
-    // API routes
+    // ❌ Original HelloWorld Swagger docs (commented out to keep for reference)
+    // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+
+    // ✅ New Movies API Swagger docs (your project_files/api.yaml)
+    const swaggerFile = fs.readFileSync('./project_files/api.yaml', 'utf8');
+    const swaggerDoc = yaml.parse(swaggerFile);
+    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+
+    // =======================
+    // 🌐 API Routes
+    // =======================
+
+    // Main API routes
     app.use('/', routes);
 
-    // Movies API
+    // Movies API routes
     app.use('/api/movies', moviesRouter);
 
+    // =======================
+    // ⚠️ Global Error Handler
+    // =======================
 
     // Global error handling middleware (must be last)
     app.use(errorHandler);
