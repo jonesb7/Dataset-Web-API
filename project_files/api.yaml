@@ -6,7 +6,7 @@ info:
     API for movies from the last 30 years.
     Implements list, details, and basic statistics by year/genre.
 servers:
-  - url: http://localhost:3000/api
+  - url: http://localhost:8000/api
     description: Local dev
 
 components:
