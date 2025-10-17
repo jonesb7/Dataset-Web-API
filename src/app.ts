@@ -63,11 +63,12 @@ export const createApp = (): Express => {
     // 🌐 API Routes
     // =======================
 
+    // Movies API routes
+    app.use('/api/movies', moviesRouter);
+
     // Main API routes
     app.use('/', routes);
 
-    // Movies API routes
-    app.use('/api/movies', moviesRouter);
 
     // =======================
     // ⚠️ Global Error Handler
