@@ -39,7 +39,7 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
                 budget: Number(row.budget ?? '0'),
                 revenue: Number(row.revenue ?? '0'),
                 mpa_rating: row.mpa_rating ?? '',
-                country: row.country ?? '',
+                country: row.country ?? ''
             };
 
             results.push(movie);
