@@ -15,7 +15,7 @@ import { corsMiddleware } from './core/middleware/cors';
 import { loggerMiddleware } from './core/middleware/logger';
 import { errorHandler } from './core/middleware/errorHandler';
 import { routes } from './routes';
-import moviesRouter from './routes/movies.routes';
+import moviesRouter from '@routes/open/movies.routes';
 // import { corsMiddleware } from '@middleware/cors';
 // import { loggerMiddleware } from '@middleware/logger';
 // import { errorHandler } from '@middleware/errorHandler';

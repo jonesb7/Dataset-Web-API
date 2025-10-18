@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../services/movies.service';
+import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../../services/movies.service';
 
 const r: Router = Router();
 

@@ -13,6 +13,8 @@ import { helloRoutes } from './open/helloRoutes';
 import { parametersRoutes } from './open/parametersRoutes';
 import docsRoutes from './open/docsRoutes';
 import { notFoundHandler } from '../core/middleware/errorHandler';
+import moviesRoutes from './open/movies.routes'; // adjust path as needed
+
 // import { notFoundHandler } from '@middleware/errorHandler';
 
 export const routes = Router();
@@ -25,6 +27,8 @@ routes.use('/hello', helloRoutes);
 
 // Parameters demonstration routes (no authentication required)
 routes.use('/parameters', parametersRoutes);
+
+routes.use('/api/movies', moviesRoutes);
 
 // Documentation routes (no authentication required)
 routes.use('/docs', docsRoutes);
@@ -44,6 +48,7 @@ routes.get('/', (request, response) => {
             parametersPath: '/parameters/path/{name}',
             parametersBody: '/parameters/body',
             parametersHeaders: '/parameters/headers',
+            movies: '/api/movies',
             docs: '/docs'
         },
         documentation: '/api-docs'
