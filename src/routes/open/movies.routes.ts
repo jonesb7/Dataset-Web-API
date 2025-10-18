@@ -32,6 +32,16 @@ r.get('/stats', async (req: Request, res: Response): Promise<void> => {
     res.json(await stats(by));
 });
 
+r.get('/random', async (_req: Request, res: Response): Promise<void> => {
+    try {
+        const movies = await getRandomMovies(10);
+        res.status(200).json({ success: true, data: movies });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ success: false, message });
+    }
+});
+
 // GET /api/movies/:id
 // 👇 Tell TS that params contain { id: string } so req.params.id is not undefined
 r.get('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
@@ -48,16 +58,6 @@ r.get('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void>
         return;
     }
     res.json(row);
-});
-
-r.get('/random', async (_req: Request, res: Response): Promise<void> => {
-    try {
-        const movies = await getRandomMovies(10);
-        res.status(200).json({ success: true, data: movies });
-    } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        res.status(500).json({ success: false, message });
-    }
 });
 
 export default r;

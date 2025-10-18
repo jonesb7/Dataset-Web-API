@@ -15,3 +15,5 @@ export * from './helloRoutes';
 
 // Parameters demonstration routes
 export * from './parametersRoutes';
+
+export * from './movies.routes';
