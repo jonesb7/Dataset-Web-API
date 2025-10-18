@@ -73,4 +73,16 @@ export async function stats(by: string) {
     return rows;
 }
 
+export async function getRandomMovies(limit = 10) {
+    const sql = `
+        SELECT id, title, original_title, release_date, runtime_min, genres
+        FROM movies
+        WHERE release_date IS NOT NULL
+        ORDER BY RANDOM()
+        LIMIT $1;
+    `;
+    const { rows } = await pool.query(sql, [limit]);
+    return rows;
+}
+
 

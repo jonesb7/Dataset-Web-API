@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { listMovies, getMovie, stats, ListArgs } from '../services/movies.service';
+import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../services/movies.service';
 
 const r: Router = Router();
 
@@ -48,6 +48,16 @@ r.get('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void>
         return;
     }
     res.json(row);
+});
+
+r.get('/random', async (_req: Request, res: Response): Promise<void> => {
+    try {
+        const movies = await getRandomMovies(10);
+        res.status(200).json({ success: true, data: movies });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ success: false, message });
+    }
 });
 
 export default r;
