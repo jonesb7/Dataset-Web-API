@@ -8,7 +8,7 @@ r.get('/', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10));
     const pageSize = Math.min(
         100,
-        Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10)),
+        Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10))
     );
 
     const { year, title, genre } = req.query as {

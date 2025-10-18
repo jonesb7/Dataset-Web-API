@@ -21,7 +21,7 @@ const csvPath = path.resolve(__dirname, '../../data/movies_last30years.csv');
 export const getMovies = async (_req: Request, res: Response): Promise<void> => {
     try {
         const results: Movie[] = [];
-
+        console.log('Resolved CSV Path:', csvPath);
         const stream = fs.createReadStream(csvPath).pipe(csv());
 
         // row fields can be undefined -> type accordingly and coalesce
@@ -39,17 +39,19 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
                 budget: Number(row.budget ?? '0'),
                 revenue: Number(row.revenue ?? '0'),
                 mpa_rating: row.mpa_rating ?? '',
-                country: row.country ?? '',
+                country: row.country ?? ''
             };
 
             results.push(movie);
         });
 
+
+
         stream.on('end', () => {
             res.status(200).json({
                 success: true,
                 count: results.length,
-                data: results.slice(0, 100), // trim for speed
+                data: results.slice(0, 100) // trim for speed
             });
         });
 
@@ -57,7 +59,7 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
             res.status(500).json({
                 success: false,
                 message: 'Error reading file',
-                error: err.message,
+                error: err.message
             });
         });
     } catch (error: unknown) {
