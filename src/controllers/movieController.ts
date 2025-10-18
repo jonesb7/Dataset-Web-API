@@ -50,6 +50,7 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
         stream.on('end', () => {
             res.status(200).json({
                 success: true,
+                message: 'file has been read',
                 count: results.length,
                 data: results.slice(0, 100) // trim for speed
             });
