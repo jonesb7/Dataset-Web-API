@@ -11,12 +11,17 @@
 
 import express, { Express } from 'express';
 import swaggerUi from 'swagger-ui-express';
-import { corsMiddleware } from '@middleware/cors';
-import { loggerMiddleware } from '@middleware/logger';
-import { errorHandler } from '@middleware/errorHandler';
-import { routes } from '@/routes';
-//import { swaggerSpec, swaggerUiOptions } from '@/core/config/swagger';
+import { corsMiddleware } from './core/middleware/cors';
+import { loggerMiddleware } from './core/middleware/logger';
+import { errorHandler } from './core/middleware/errorHandler';
+import { routes } from './routes';
 import moviesRouter from './routes/movies.routes';
+// import { corsMiddleware } from '@middleware/cors';
+// import { loggerMiddleware } from '@middleware/logger';
+// import { errorHandler } from '@middleware/errorHandler';
+// import { routes } from '@/routes';
+//import { swaggerSpec, swaggerUiOptions } from '@/core/config/swagger';
+// import moviesRouter from './routes/movies.routes';
 
 // ✅ Added imports for reading your custom Swagger YAML
 import fs from 'fs';

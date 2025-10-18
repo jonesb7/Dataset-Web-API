@@ -12,7 +12,8 @@ import { healthRoutes } from './open/healthRoutes';
 import { helloRoutes } from './open/helloRoutes';
 import { parametersRoutes } from './open/parametersRoutes';
 import docsRoutes from './open/docsRoutes';
-import { notFoundHandler } from '@middleware/errorHandler';
+import { notFoundHandler } from '../core/middleware/errorHandler';
+// import { notFoundHandler } from '@middleware/errorHandler';
 
 export const routes = Router();
 

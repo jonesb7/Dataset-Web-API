@@ -1,10 +1,12 @@
 import { Pool } from 'pg';
 
-const cs = process.env.DATABASE_URL;
+const cs = process.env.DATABASE_URL ?? '';
+
+const needsSSL =
+    cs !== '' && !cs.includes('localhost') && !cs.includes('127.0.0.1');
 
 export const pool = new Pool({
     connectionString: cs,
-    // allow SSL for common hosted Postgres (e.g., neon.tech)
-    ssl: cs?.includes('neon.tech') ? { rejectUnauthorized: false } : undefined,
+    ssl: needsSSL ? { rejectUnauthorized: false } : undefined,
 });
 

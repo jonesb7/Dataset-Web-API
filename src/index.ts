@@ -12,9 +12,11 @@
 // Load environment variables from .env file (must be first)
 import 'dotenv/config';
 
-import { createApp } from '@/app';
-import { config } from '@utilities/envConfig';
-
+// import { createApp } from '@/app';
+// import { config } from '@utilities/envConfig';
+// AFTER
+import { createApp } from './app';
+import { config } from './core/utilities/envConfig';
 const PORT = config.PORT || 8000;
 
 /**
