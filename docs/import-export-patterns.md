@@ -590,7 +590,7 @@ const app_1 = require("./app");
 
 **Configuration:**
 ```json
-// tsconfig.json
+// movies.postman_collection.json
 {
   "compilerOptions": {
     "module": "CommonJS"  // Output format
@@ -1039,7 +1039,7 @@ import { ApiResponse } from '@/types';                   // Type definition
 
 **2. Configure Runtime (for ts-node-dev):**
 ```json
-// tsconfig.json
+// movies.postman_collection.json
 {
   "ts-node": {
     "require": ["tsconfig-paths/register"]
@@ -1169,7 +1169,7 @@ import { config } from '../utilities/env';  // ../utilities/env.ts
 **4. Path aliases** (if configured)
 ```typescript
 import { sendSuccess } from '@utilities/responseUtils';
-// Resolved via tsconfig.json paths
+// Resolved via movies.postman_collection.json paths
 ```
 
 ### File Resolution Order
@@ -1199,7 +1199,7 @@ import { routes } from './routes/index';  // Finds ./routes/index.ts
 
 **Module Resolution Strategy:**
 ```json
-// tsconfig.json
+// movies.postman_collection.json
 {
   "compilerOptions": {
     "moduleResolution": "node",  // Use Node.js resolution
@@ -1215,7 +1215,7 @@ import { routes } from './routes/index';  // Finds ./routes/index.ts
 
 **Issue:** "Cannot find module '@/types'"
 ```typescript
-// Solution: Check tsconfig.json paths configuration
+// Solution: Check movies.postman_collection.json paths configuration
 {
   "paths": {
     "@/types": ["types"],  // Ensure this matches your directory
@@ -1424,7 +1424,7 @@ import { config } from '@utilities/envConfig';
 
 **Configuration:**
 ```json
-// tsconfig.json
+// movies.postman_collection.json
 {
   "baseUrl": "./src",
   "paths": {
@@ -1541,7 +1541,7 @@ export const validateEmail = (email: string): boolean => {
 
 **Solution:**
 ```json
-// Check tsconfig.json
+// Check movies.postman_collection.json
 {
   "compilerOptions": {
     "baseUrl": "./src",
