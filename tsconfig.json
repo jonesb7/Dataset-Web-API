@@ -2,10 +2,11 @@
   "compilerOptions": {
     /* Language and Environment */
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "module": "CommonJS",
     "moduleResolution": "node",
-
     /* Emit */
     "outDir": "./dist",
     "rootDir": "./src",
@@ -13,12 +14,10 @@
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-
     /* Interop Constraints */
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-
     /* Type Checking */
     "strict": true,
     "noImplicitAny": true,
@@ -31,21 +30,30 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
-
     /* Completeness */
     "skipLibCheck": true,
-
     /* Path Mapping */
     "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"],
-      "@/types": ["types"],
-      "@controllers/*": ["controllers/*"],
-      "@middleware/*": ["core/middleware/*"],
-      "@utilities/*": ["core/utilities/*"],
-      "@routes/*": ["routes/*"]
+      "@/*": [
+        "*"
+      ],
+      "@/types": [
+        "types"
+      ],
+      "@controllers/*": [
+        "controllers/*"
+      ],
+      "@middleware/*": [
+        "core/middleware/*"
+      ],
+      "@utilities/*": [
+        "core/utilities/*"
+      ],
+      "@routes/*": [
+        "routes/*"
+      ]
     },
-
     /* Advanced Options */
     "resolveJsonModule": true,
     "experimentalDecorators": true,
@@ -61,6 +69,8 @@
     "**/*.spec.ts"
   ],
   "ts-node": {
-    "require": ["tsconfig-paths/register"]
+    "require": [
+      "tsconfig-paths/register"
+    ]
   }
 }
