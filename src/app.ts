@@ -16,16 +16,9 @@ import { loggerMiddleware } from './core/middleware/logger';
 import { errorHandler } from './core/middleware/errorHandler';
 import { routes } from './routes';
 import moviesRouter from '@routes/open/movies.routes';
-// import { corsMiddleware } from '@middleware/cors';
-// import { loggerMiddleware } from '@middleware/logger';
-// import { errorHandler } from '@middleware/errorHandler';
-// import { routes } from '@/routes';
-//import { swaggerSpec, swaggerUiOptions } from '@/core/config/swagger';
-// import moviesRouter from './routes/movies.routes';
-
-// ✅ Added imports for reading your custom Swagger YAML
 import fs from 'fs';
 import yaml from 'yaml';
+import path from 'path';
 
 /**
  * Create and configure Express application with complete middleware stack
@@ -42,44 +35,46 @@ export const createApp = (): Express => {
     // Trust proxy headers (important for deployment behind load balancers)
     app.set('trust proxy', 1);
 
-    // Security and CORS middleware (must be first)
+    // =======================
+    // 🔒 Security Middleware
+    // =======================
     app.use(corsMiddleware);
 
-    // Request parsing middleware
+    // =======================
+    // 📦 Body Parsing
+    // =======================
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-    // Logging middleware (after parsing, before routes)
+    // =======================
+    // 🧾 Request Logging
+    // =======================
     app.use(loggerMiddleware);
 
     // =======================
     // 📚 API Documentation
     // =======================
 
-    // ❌ Original HelloWorld Swagger docs (commented out to keep for reference)
-    // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
-
-    // ✅ New Movies API Swagger docs (your project_files/api.yaml)
-    const swaggerFile = fs.readFileSync('./project_files/api.yaml', 'utf8');
+    // Load YAML dynamically (works both locally and on Render)
+    const swaggerPath = path.resolve(process.cwd(), 'project_files/api.yaml');
+    const swaggerFile = fs.readFileSync(swaggerPath, 'utf8');
     const swaggerDoc = yaml.parse(swaggerFile);
-    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+
+    // Serve Swagger UI at /api-docs
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+
+    // Redirect root to docs (fixes Render “Cannot GET /”)
+    app.get('/', (_req, res) => res.redirect('/api-docs'));
 
     // =======================
     // 🌐 API Routes
     // =======================
-
-    // Movies API routes
     app.use('/api/movies', moviesRouter);
-
-    // Main API routes
     app.use('/', routes);
-
 
     // =======================
     // ⚠️ Global Error Handler
     // =======================
-
-    // Global error handling middleware (must be last)
     app.use(errorHandler);
 
     return app;

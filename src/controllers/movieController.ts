@@ -49,7 +49,7 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
             res.status(200).json({
                 success: true,
                 count: results.length,
-                data: results.slice(0, 100), // trim for speed
+                data: results.slice(0, 100) // trim for speed
             });
         });
 
@@ -57,7 +57,7 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
             res.status(500).json({
                 success: false,
                 message: 'Error reading file',
-                error: err.message,
+                error: err.message
             });
         });
     } catch (error: unknown) {
