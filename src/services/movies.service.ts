@@ -12,11 +12,11 @@ export type ListArgs = {
 };
 
 /**
- * Build the base SELECT so we consistently map your schema:
- * - table: movie (singular)
+ * Base projection to normalize the movie row shape for the API.
+ * - movie (singular) table
  * - movie_id -> id
  * - runtime  -> runtime_min
- * - genres TEXT (comma-separated) -> string[] at query time
+ * - genres TEXT (comma separated) -> string[]
  */
 const BASE_SELECT = `
   SELECT
@@ -34,15 +34,21 @@ const BASE_SELECT = `
   FROM movie
 `;
 
+/**
+ * List movies with optional filters and pagination.
+ * Year matching is robust even if release_date is stored as ISO/timestamp/text.
+ */
 export async function listMovies({ page, pageSize, year, title, genre }: ListArgs) {
     const offset = (page - 1) * pageSize;
 
     const where: string[] = [];
     const params: unknown[] = [];
 
+    // YEAR filter (robust: works for DATE, TIMESTAMP, or text/ISO strings)
     if (year) {
         params.push(parseInt(year, 10));
-        where.push(`EXTRACT(YEAR FROM release_date) = $${params.length}`);
+        // Compare the first 4 chars of release_date::text to the year
+        where.push(`LEFT(release_date::text, 4)::int = $${params.length}`);
     }
 
     if (title) {
@@ -51,8 +57,8 @@ export async function listMovies({ page, pageSize, year, title, genre }: ListArg
     }
 
     if (genre) {
-        // genres is TEXT in DB; we turned it into an array via string_to_array in SELECT,
-        // so we need to test membership using the expression again here.
+        // genres is TEXT in DB; in SELECT it's converted to array.
+        // For filtering, re-use the expression here.
         params.push(genre);
         where.push(`$${params.length} = ANY(string_to_array(NULLIF(genres, ''), ','))`);
     }
@@ -79,8 +85,12 @@ export async function getMovie(id: number) {
     return rows[0];
 }
 
+/**
+ * Statistics by 'genre' or 'year'.
+ * - by=genre: counts per genre (from comma-separated TEXT)
+ * - by=year:  robust year extraction from release_date::text
+ */
 export async function stats(by: string) {
-    // Only allow 'year' or 'genre'
     const key = by === 'genre' ? 'genre' : 'year';
 
     if (key === 'genre') {
@@ -98,12 +108,23 @@ export async function stats(by: string) {
         return rows;
     }
 
+    // by=year — safe across DATE/TIMESTAMP/text/ISO
     const sql = `
-    SELECT EXTRACT(YEAR FROM release_date)::int AS year, COUNT(*)::int AS count
-    FROM movie
-    WHERE release_date IS NOT NULL
+    WITH years AS (
+      SELECT
+        CASE
+          WHEN LEFT(release_date::text, 4) ~ '^[0-9]{4}$'
+            THEN LEFT(release_date::text, 4)::int
+          ELSE NULL
+        END AS year
+      FROM movie
+      WHERE release_date IS NOT NULL
+    )
+    SELECT year, COUNT(*)::int AS count
+    FROM years
+    WHERE year IS NOT NULL
     GROUP BY year
-    ORDER BY year DESC
+    ORDER BY year
   `;
     const { rows } = await pool.query(sql);
     return rows;
@@ -119,6 +140,3 @@ export async function getRandomMovies(limit = 10) {
     const { rows } = await pool.query(sql, [limit]);
     return rows;
 }
-
-
-
