@@ -1,0 +1,194 @@
+{
+  "info": {
+    "name": "Movies API – Local & Render",
+    "_postman_id": "3e6d9b3a-3c2a-4de1-b0d3-aaaabbbbcccc",
+    "description": "Tests for Movies API against Local and Render deployments using a switchable baseUrl variable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl_local", "value": "http://localhost:8000/api" },
+    { "key": "baseUrl_render", "value": "https://dataset-web-api.onrender.com/api" },
+    { "key": "baseUrl", "value": "http://localhost:8000/api" }
+  ],
+  "item": [
+    {
+      "name": "Get All Movies (paged)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies?page=1&pageSize=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "pageSize", "value": "10" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Content-Type is JSON\", () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "const body = pm.response.json();",
+              "pm.test(\"Body is array\", () => pm.expect(body).to.be.an('array'));",
+              "if (Array.isArray(body) && body.length > 0) {",
+              "  const m = body[0];",
+              "  pm.expect(m).to.have.property('id');",
+              "  pm.expect(m).to.have.property('title');",
+              "  pm.expect(m).to.have.property('release_date');",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Movies by Year (filter)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies?year=2015&page=1&pageSize=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies"],
+          "query": [
+            { "key": "year", "value": "2015" },
+            { "key": "page", "value": "1" },
+            { "key": "pageSize", "value": "10" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
+              "const body = pm.response.json();",
+              "pm.expect(body).to.be.an('array');",
+              "if (body.length > 0) {",
+              "  const y = new Date(body[0].release_date).getFullYear();",
+              "  pm.test(\"First item matches year filter\", () => pm.expect(y).to.eql(2015));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Random Movies",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/movies/random", "host": ["{{baseUrl}}"], "path": ["movies", "random"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
+              "const body = pm.response.json();",
+              "pm.expect(body).to.have.property('success', true);",
+              "pm.expect(body).to.have.property('data');",
+              "pm.expect(body.data).to.be.an('array');",
+              "if (body.data.length > 0) {",
+              "  pm.expect(body.data[0]).to.have.property('id');",
+              "  pm.expect(body.data[0]).to.have.property('title');",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Movie Stats by Genre",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies/stats?by=genre",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies", "stats"],
+          "query": [{ "key": "by", "value": "genre" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
+              "const body = pm.response.json();",
+              "pm.expect(body).to.be.an('array').that.is.not.empty;",
+              "body.forEach(it => {",
+              "  pm.expect(it).to.have.property('genre');",
+              "  pm.expect(it).to.have.property('count');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Movie Stats by Year",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies/stats?by=year",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies", "stats"],
+          "query": [{ "key": "by", "value": "year" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
+              "const body = pm.response.json();",
+              "pm.expect(body).to.be.an('array').that.is.not.empty;",
+              "body.forEach(it => {",
+              "  pm.expect(it).to.have.property('year');",
+              "  pm.expect(it).to.have.property('count');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Movie by ID (1)",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/movies/1", "host": ["{{baseUrl}}"], "path": ["movies", "1"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
+              "const movie = pm.response.json();",
+              "pm.expect(movie).to.have.property('id');",
+              "pm.expect(movie).to.have.property('title');",
+              "pm.expect(movie).to.have.property('genres');"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
