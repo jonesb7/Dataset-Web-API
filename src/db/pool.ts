@@ -24,7 +24,7 @@ export const pool = new Pool({
     ssl: needsSSL ? { rejectUnauthorized: false } : undefined,
     max: 10,                    // Max concurrent clients
     idleTimeoutMillis: 30_000,  // Close idle connections after 30s
-    connectionTimeoutMillis: 10_000, // Timeout if DB unreachable
+    connectionTimeoutMillis: 10_000 // Timeout if DB unreachable
 });
 
 // Optional: simple connectivity check (runs once on startup)
