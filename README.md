@@ -1113,7 +1113,7 @@ npm run type-check
 # Ensure @types packages are installed
 npm install --save-dev @types/node @types/express
 
-# Check tsconfig.json is present and valid
+# Check movies.postman_collection.json is present and valid
 ```
 
 **Issue: CORS errors in browser**

@@ -360,7 +360,7 @@ Source Code (TypeScript)  →  Type Checking  →  Code Generation  →  JavaScr
 The TypeScript compiler is invoked with the `tsc` command:
 
 ```bash
-# Compile entire project using tsconfig.json
+# Compile entire project using movies.postman_collection.json
 tsc
 
 # Compile specific file
@@ -1014,7 +1014,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2022,                      // Modern JavaScript features
     sourceType: 'module',                   // ES6 modules
-    project: './tsconfig.json'              // TypeScript project config
+    project: './movies.postman_collection.json'              // TypeScript project config
   },
   rules: {
     // Custom rule overrides
@@ -1921,7 +1921,7 @@ Error: Cannot find module '@utilities/responseUtils'
 
 **Cause B: Path alias not in tsconfig.json**
 ```json
-// tsconfig.json
+// movies.postman_collection.json
 {
   "compilerOptions": {
     "baseUrl": "./src",
@@ -2019,7 +2019,7 @@ npm install
 
 **Solution:**
 ```json
-// Ensure tsconfig.json has:
+// Ensure movies.postman_collection.json has:
 {
   "compilerOptions": {
     "sourceMap": true,
@@ -2130,7 +2130,7 @@ npm start
 TypeScript supports incremental compilation for faster builds:
 
 ```json
-// tsconfig.json
+// movies.postman_collection.json
 {
   "compilerOptions": {
     "incremental": true,
@@ -2181,7 +2181,7 @@ TypeScript supports incremental compilation for faster builds:
 
 ```bash
 # Use skipLibCheck for faster compilation
-# tsconfig.json:
+# movies.postman_collection.json:
 {
   "compilerOptions": {
     "skipLibCheck": true  // Skip type checking node_modules

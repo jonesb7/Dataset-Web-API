@@ -130,6 +130,24 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PagedMovies' }
+              examples:
+                sample:
+                  summary: Example response
+                  value:
+                    page: 1
+                    pageSize: 2
+                    total: 2371
+                    items:
+                      - movie_id: 101
+                        title: "Inception"
+                        release_date: "2010-07-16"
+                        genres: ["Science Fiction", "Action"]
+                        runtime: 148
+                      - movie_id: 102
+                        title: "The Matrix"
+                        release_date: "1999-03-31"
+                        genres: ["Science Fiction"]
+                        runtime: 136
         '400':
           description: Invalid query
           content:
@@ -178,6 +196,28 @@ paths:
                 items: { $ref: '#/components/schemas/StatBucket' }
         '400':
           description: Missing or invalid 'by' parameter
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /movies/random:
+    get:
+      summary: Get random movies
+      description: Returns a random selection of movies (e.g. 10).
+      responses:
+        '200':
+          description: Random movie list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Movie' }
+        '500':
+          description: Internal error
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
