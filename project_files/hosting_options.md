@@ -2,13 +2,17 @@
 
 ## Option 1: Heroku
 - Pros: Free tier, simple Node.js deployment, built-in Postgres add-on.
-- Cons: Free tier is limited, scaling costs money.
+- Cons: Free tier is limited, scaling costs money, takes time to set up
 
 ## Option 2: Render
 - Pros: Easy GitHub integration, free Postgres instance, modern interface.
 - Cons: Free tier sleeps after inactivity.
 
-## Option 3: AWS EC2 + RDS
+## Option 3: Neon
+- Pros: Free tier, fast setup, has all needed functionality
+- Cons: .5 gigs for the project, limited size
+
+## Option 4: AWS EC2 + RDS
 - Pros: Full control, scalable, production-grade.
 - Cons: More setup complexity, not free long-term.
 
