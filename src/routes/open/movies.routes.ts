@@ -1,5 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../../services/movies.service';
+import {
+    getRandomMovies,
+    listMovies,
+    getMovie,
+    stats,
+    ListArgs,
+    listMoviesByOffset
+} from '../../services/movies.service';
 
 const r: Router = Router();
 
@@ -8,7 +15,7 @@ r.get('/', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10));
     const pageSize = Math.min(
         100,
-        Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10)),
+        Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10))
     );
 
     const { year, title, genre } = req.query as {
@@ -31,6 +38,29 @@ r.get('/stats', async (req: Request, res: Response): Promise<void> => {
     const by = String(req.query.by ?? 'year');
     res.json(await stats(by));
 });
+
+// GET /api/movies/page?limit=10&offset=50
+r.get('/page', async (req: Request, res: Response): Promise<void> => {
+    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
+    const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit ?? '25'), 10)));
+    const offset = (page - 1) * limit;
+
+    try {
+        const data = await listMoviesByOffset(limit, offset);
+        res.json({
+            success: true,
+            page,
+            limit,
+            offset,
+            data,
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ success: false, message });
+    }
+});
+
+
 
 r.get('/random', async (_req: Request, res: Response): Promise<void> => {
     try {
