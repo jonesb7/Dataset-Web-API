@@ -8,6 +8,8 @@ import {
     listMoviesByOffset
 } from '../../services/movies.service';
 
+import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../../services/movies.service';
+import { insertMovie, deleteMovie } from '../../controllers/movieController';
 const r: Router = Router();
 
 // GET /api/movies
@@ -71,7 +73,11 @@ r.get('/random', async (_req: Request, res: Response): Promise<void> => {
         res.status(500).json({ success: false, message });
     }
 });
+// POST /api/movies/insert - NEW!
+r.post('/insert', insertMovie);
 
+// DELETE /api/movies/delete/:id - NEW!
+r.delete('/delete/:id', deleteMovie);
 // GET /api/movies/:id
 // 👇 Tell TS that params contain { id: string } so req.params.id is not undefined
 r.get('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
