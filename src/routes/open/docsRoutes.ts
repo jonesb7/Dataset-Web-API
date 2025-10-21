@@ -46,10 +46,10 @@ const router = Router();
  *               type: string
  *               description: Complete HTML page with documentation index
  */
-router.get('/', (request: Request, response: Response) => {
+router.get('/', async (request: Request, response: Response) => {
     try {
         const docsPath = path.join(__dirname, '../../../docs');
-        const indexHtml = generateDocsIndex(docsPath);
+        const indexHtml = await generateDocsIndex(docsPath);
 
         response.setHeader('Content-Type', 'text/html; charset=utf-8');
         response.send(indexHtml);
@@ -281,7 +281,7 @@ router.get('/:filename',
             .withMessage('Filename must be a valid markdown file (alphanumeric, underscores, hyphens only)')
     ],
     handleValidationErrors,
-    (request: Request, response: Response): void => {
+    async (request: Request, response: Response): Promise<void> => {
         try {
             const filename = request.params.filename;
             if (!filename) {
@@ -311,7 +311,7 @@ router.get('/:filename',
                 return;
             }
 
-            const htmlContent = readMarkdownFile(filePath);
+            const htmlContent = await readMarkdownFile(filePath);
 
             if (!htmlContent) {
                 response.status(404).json({
