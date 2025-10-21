@@ -1,11 +1,5 @@
 import { Router, Request, Response } from 'express';
-import {
-    getRandomMovies,
-    listMovies,
-    getMovie,
-    stats,
-    ListArgs,
-    listMoviesByOffset
+import { listMoviesByOffset
 } from '../../services/movies.service';
 
 import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../../services/movies.service';
