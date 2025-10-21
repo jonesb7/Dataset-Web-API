@@ -140,3 +140,15 @@ export async function getRandomMovies(limit = 10) {
     const { rows } = await pool.query(sql, [limit]);
     return rows;
 }
+
+export async function listMoviesByOffset(limit: number, offset: number) {
+    const sql = `
+      ${BASE_SELECT}
+      ORDER BY release_date DESC NULLS LAST
+      LIMIT $1 OFFSET $2
+    `;
+
+    const { rows } = await pool.query(sql, [limit, offset]);
+    return rows;
+}
+

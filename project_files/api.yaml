@@ -158,6 +158,52 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /movies/page:
+    get:
+      summary: Paginated list of movies (custom)
+      description: |
+        Returns a list of movies using a `page` number and `limit`.
+        The offset is automatically calculated as: (page - 1) * limit.
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: The page number (starting from 1)
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            maximum: 100
+          description: Number of movies per page
+      responses:
+        '200':
+          description: Paginated movie results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  page: { type: integer, example: 1 }
+                  limit: { type: integer, example: 10 }
+                  offset: { type: integer, example: 0 }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Movie'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /movies/stats:
     get:
       summary: Movie statistics
