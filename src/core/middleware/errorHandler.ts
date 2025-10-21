@@ -118,9 +118,9 @@ export const errorHandler = (
 
         // Log operational vs programming errors differently
         if (error instanceof AppError && error.isOperational) {
-            console.error(`   Type: Operational Error (expected)`);
+            console.error('   Type: Operational Error (expected)');
         } else {
-            console.error(`   Type: Programming Error (unexpected)`);
+            console.error('   Type: Programming Error (unexpected)');
         }
     };
 
