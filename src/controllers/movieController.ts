@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
+import {listMoviesAdvanced} from '@/services/movies.service';
 
 interface Movie {
     title: string;

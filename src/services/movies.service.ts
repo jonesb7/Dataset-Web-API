@@ -11,6 +11,26 @@ export type ListArgs = {
     genre?: OptionalStr;
 };
 
+export type AdvancedListArgs = {
+    page: number;
+    limit: number;
+    yearStart: number | undefined;
+    yearEnd: number | undefined;
+    budgetLow: number | undefined;
+    budgetHigh: number | undefined;
+    revenueLow: number | undefined;
+    revenueHigh: number | undefined;
+    runtimeLow: number | undefined;
+    runtimeHigh: number | undefined;
+    genre: string | undefined;
+    studio: string | undefined;
+    producer: string | undefined;
+    director: string | undefined;
+    mpaRating: string | undefined;
+    collection: string | undefined;
+};
+
+
 /**
  * Base projection to normalize the movie row shape for the API.
  * - movie (singular) table
@@ -141,14 +161,131 @@ export async function getRandomMovies(limit = 10) {
     return rows;
 }
 
-export async function listMoviesByOffset(limit: number, offset: number) {
-    const sql = `
-      ${BASE_SELECT}
-      ORDER BY release_date DESC NULLS LAST
-      LIMIT $1 OFFSET $2
-    `;
+export async function listMoviesAdvanced(args: AdvancedListArgs) {
+    const {
+        page,
+        limit,
+        yearStart,
+        yearEnd,
+        budgetLow,
+        budgetHigh,
+        revenueLow,
+        revenueHigh,
+        runtimeLow,
+        runtimeHigh,
+        genre,
+        studio,
+        producer,
+        director,
+        mpaRating,
+        collection
+    } = args;
 
-    const { rows } = await pool.query(sql, [limit, offset]);
+    const offset = (page - 1) * limit;
+    const where: string[] = [];
+    const params: any[] = [];
+
+    if (yearStart !== undefined) {
+        params.push(yearStart);
+        where.push(`LEFT(release_date::text, 4)::int >= $${params.length}`);
+    }
+
+    if (yearEnd !== undefined) {
+        params.push(yearEnd);
+        where.push(`LEFT(release_date::text, 4)::int <= $${params.length}`);
+    }
+
+    if (budgetLow !== undefined) {
+        params.push(budgetLow);
+        where.push(`budget >= $${params.length}`);
+    }
+
+    if (budgetHigh !== undefined) {
+        params.push(budgetHigh);
+        where.push(`budget <= $${params.length}`);
+    }
+
+    if (revenueLow !== undefined) {
+        params.push(revenueLow);
+        where.push(`revenue >= $${params.length}`);
+    }
+
+    if (revenueHigh !== undefined) {
+        params.push(revenueHigh);
+        where.push(`revenue <= $${params.length}`);
+    }
+
+    if (runtimeLow !== undefined) {
+        params.push(runtimeLow);
+        where.push(`runtime >= $${params.length}`);
+    }
+
+    if (runtimeHigh !== undefined) {
+        params.push(runtimeHigh);
+        where.push(`runtime <= $${params.length}`);
+    }
+
+    if (genre) {
+        params.push(genre);
+        where.push(`$${params.length} = ANY(string_to_array(NULLIF(genres, ''), ','))`);
+    }
+
+    if (mpaRating) {
+        params.push(mpaRating);
+        where.push(`mpa_rating = $${params.length}`);
+    }
+
+    if (studio) {
+        params.push(`%${studio}%`);
+        where.push(`EXISTS (
+      SELECT 1 FROM movie_studio ms
+      JOIN studio s ON s.studio_id = ms.studio_id
+      WHERE ms.movie_id = movie.movie_id AND s.name ILIKE $${params.length}
+    )`);
+    }
+
+
+    if (producer) {
+        params.push(`%${producer}%`);
+        where.push(`EXISTS (
+      SELECT 1 FROM crew
+      WHERE crew.movie_id = movie.movie_id
+        AND LOWER(role) = 'producer'
+        AND name ILIKE $${params.length}
+    )`);
+    }
+
+    if (director) {
+        params.push(`%${director}%`);
+        where.push(`EXISTS (
+      SELECT 1 FROM crew
+      WHERE crew.movie_id = movie.movie_id
+        AND LOWER(role) = 'director'
+        AND name ILIKE $${params.length}
+    )`);
+    }
+
+
+    if (collection) {
+        params.push(`%${collection}%`);
+        where.push(`EXISTS (
+      SELECT 1 FROM movie_collection mc
+      JOIN collection c ON c.collection_id = mc.collection_id
+      WHERE mc.movie_id = movie.movie_id AND c.name ILIKE $${params.length}
+    )`);
+    }
+
+
+    const sql = `
+    ${BASE_SELECT}
+    ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+    ORDER BY release_date DESC NULLS LAST
+    LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+  `;
+
+    params.push(limit, offset);
+    const { rows } = await pool.query(sql, params);
     return rows;
 }
+
 

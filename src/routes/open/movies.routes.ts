@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { listMoviesByOffset
+import {
+    listMoviesAdvanced
 } from '../../services/movies.service';
 
 import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../../services/movies.service';
@@ -36,25 +37,67 @@ r.get('/stats', async (req: Request, res: Response): Promise<void> => {
 });
 
 // GET /api/movies/page?limit=10&offset=50
-r.get('/page', async (req: Request, res: Response): Promise<void> => {
-    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
-    const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit ?? '25'), 10)));
-    const offset = (page - 1) * limit;
+// In movies.routes.ts
 
+r.get('/page', async (req, res) => {
     try {
-        const data = await listMoviesByOffset(limit, offset);
+        // Helper to parse numbers or return undefined
+        const parseNumber = (value: any): number | undefined => {
+            const n = Number(value);
+            return Number.isNaN(n) ? undefined : n;
+        };
+
+        const {
+            page = '1',
+            limit = '10',
+            yearStart,
+            yearEnd,
+            budgetLow,
+            budgetHigh,
+            revenueLow,
+            revenueHigh,
+            runtimeLow,
+            runtimeHigh,
+            genre,
+            studio,
+            producer,
+            director,
+            mpaRating,
+            collection
+        } = req.query;
+
+        const result = await listMoviesAdvanced({
+            page: parseNumber(page) ?? 1,
+            limit: parseNumber(limit) ?? 10,
+            yearStart: parseNumber(yearStart),
+            yearEnd: parseNumber(yearEnd),
+            budgetLow: parseNumber(budgetLow),
+            budgetHigh: parseNumber(budgetHigh),
+            revenueLow: parseNumber(revenueLow),
+            revenueHigh: parseNumber(revenueHigh),
+            runtimeLow: parseNumber(runtimeLow),
+            runtimeHigh: parseNumber(runtimeHigh),
+            genre: typeof genre === 'string' && genre.trim() !== '' ? genre.trim() : undefined,
+            studio: typeof studio === 'string' && studio.trim() !== '' ? studio.trim() : undefined,
+            producer: typeof producer === 'string' && producer.trim() !== '' ? producer.trim() : undefined,
+            director: typeof director === 'string' && director.trim() !== '' ? director.trim() : undefined,
+            mpaRating: typeof mpaRating === 'string' && mpaRating.trim() !== '' ? mpaRating.trim() : undefined,
+            collection: typeof collection === 'string' && collection.trim() !== '' ? collection.trim() : undefined
+        });
+
         res.json({
             success: true,
-            page,
-            limit,
-            offset,
-            data,
+            data: result,
+            page: parseInt(page as string, 10),
+            limit: parseInt(limit as string, 10),
+            offset: (parseInt(page as string, 10) - 1) * parseInt(limit as string, 10)
         });
-    } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        res.status(500).json({ success: false, message });
+    } catch (err) {
+        console.error('Server error in GET /movies/page:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
+
 
 
 
