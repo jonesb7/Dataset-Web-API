@@ -160,31 +160,80 @@ paths:
 
   /movies/page:
     get:
-      summary: Paginated list of movies (custom)
+      summary: Paginated list of movies with advanced filters
       description: |
         Returns a list of movies using a `page` number and `limit`.
-        The offset is automatically calculated as: (page - 1) * limit.
+        Supports advanced filtering by release year range, budget, revenue, runtime, genre, studio, producer, director, MPA rating, and collection.
       parameters:
         - in: query
           name: page
           required: false
-          schema:
-            type: integer
-            default: 1
-            minimum: 1
-          description: The page number (starting from 1)
+          schema: { type: integer, default: 1, minimum: 1 }
+          description: Page number (starting from 1)
         - in: query
           name: limit
           required: false
-          schema:
-            type: integer
-            default: 25
-            minimum: 1
-            maximum: 100
+          schema: { type: integer, default: 25, minimum: 1, maximum: 100 }
           description: Number of movies per page
+        - in: query
+          name: yearStart
+          schema: { type: integer, minimum: 1900, maximum: 2100 }
+          description: Minimum release year
+        - in: query
+          name: yearEnd
+          schema: { type: integer, minimum: 1900, maximum: 2100 }
+          description: Maximum release year
+        - in: query
+          name: budgetLow
+          schema: { type: integer, minimum: 0 }
+          description: Minimum budget
+        - in: query
+          name: budgetHigh
+          schema: { type: integer, minimum: 0 }
+          description: Maximum budget
+        - in: query
+          name: revenueLow
+          schema: { type: integer, minimum: 0 }
+          description: Minimum revenue
+        - in: query
+          name: revenueHigh
+          schema: { type: integer, minimum: 0 }
+          description: Maximum revenue
+        - in: query
+          name: runtimeLow
+          schema: { type: integer, minimum: 0 }
+          description: Minimum runtime (in minutes)
+        - in: query
+          name: runtimeHigh
+          schema: { type: integer, minimum: 0 }
+          description: Maximum runtime (in minutes)
+        - in: query
+          name: genre
+          schema: { type: string }
+          description: Filter by genre (exact match)
+        - in: query
+          name: studio
+          schema: { type: string }
+          description: Filter by studio name (exact match)
+        - in: query
+          name: producer
+          schema: { type: string }
+          description: Filter by producer name (exact match)
+        - in: query
+          name: director
+          schema: { type: string }
+          description: Filter by director name (exact match)
+        - in: query
+          name: mpaRating
+          schema: { type: string }
+          description: Filter by MPA rating (e.g., PG-13, R)
+        - in: query
+          name: collection
+          schema: { type: string }
+          description: Filter by collection name
       responses:
         '200':
-          description: Paginated movie results
+          description: Paginated movie results with applied filters
           content:
             application/json:
               schema:

@@ -1,5 +1,5 @@
 // src/services/movies.service.ts
-import { pool } from '../db/pool';
+import { pool } from '@/db/pool';
 
 type OptionalStr = string | undefined;
 
@@ -9,6 +9,25 @@ export type ListArgs = {
     year?: OptionalStr;
     title?: OptionalStr;
     genre?: OptionalStr;
+};
+
+export type AdvancedListArgs = {
+    page: number;
+    limit: number;
+    yearStart: number | undefined;
+    yearEnd: number | undefined;
+    budgetLow: number | undefined;
+    budgetHigh: number | undefined;
+    revenueLow: number | undefined;
+    revenueHigh: number | undefined;
+    runtimeLow: number | undefined;
+    runtimeHigh: number | undefined;
+    genre: string | undefined;
+    studio: string | undefined;
+    producer: string | undefined;
+    director: string | undefined;
+    mpaRating: string | undefined;
+    collection: string | undefined;
 };
 
 /**
@@ -33,6 +52,65 @@ const BASE_SELECT = `
     country
   FROM movie
 `;
+
+/* -------------------------------------------------------------------------- */
+/*                  Helper: detect available column identifiers               */
+/* -------------------------------------------------------------------------- */
+
+let cachedMovieColumns: Set<string> | null = null;
+
+/** Load column names for table public.movie once and cache them. */
+async function ensureMovieColumns(): Promise<Set<string>> {
+    if (cachedMovieColumns) return cachedMovieColumns;
+
+    const sql = `
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'movie'
+  `;
+    const { rows } = await pool.query(sql);
+    cachedMovieColumns = new Set(rows.map(r => String(r.column_name)));
+
+    return cachedMovieColumns!;
+}
+
+/**
+ * Pick the first existing column from the candidates. Returns
+ *   - unquoted identifier (e.g., studios) if snake_case exists
+ *   - or a properly quoted identifier (e.g., "Studios") if Title Case exists
+ * If none exist, returns undefined (caller must skip the filter).
+ */
+function pickColumnIdentifier(existing: Set<string>, candidates: string[]): string | undefined {
+    for (const c of candidates) {
+        // prefer snake_case exact match
+        if (existing.has(c)) return c;
+    }
+    // check Title Case variants (need quoting)
+    for (const c of candidates) {
+        // If the DB column actually is Title Case, it appears as-is in information_schema
+        if (existing.has(c)) return `"${c}"`;
+    }
+    return undefined;
+}
+
+/** Build an EXISTS clause that matches a comma-separated TEXT column by ILIKE. */
+function buildCsvMatchClause(
+    columnIdent: string,
+    paramIndex: number
+): string {
+    // btrim() trims spaces around each split value before comparing
+    return `
+    EXISTS (
+      SELECT 1
+      FROM unnest(string_to_array(NULLIF(${columnIdent}, ''), ',')) AS v(val)
+      WHERE btrim(val) ILIKE $${paramIndex}
+    )
+  `;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            Core list / read APIs                           */
+/* -------------------------------------------------------------------------- */
 
 /**
  * List movies with optional filters and pagination.
@@ -141,14 +219,139 @@ export async function getRandomMovies(limit = 10) {
     return rows;
 }
 
-export async function listMoviesByOffset(limit: number, offset: number) {
-    const sql = `
-      ${BASE_SELECT}
-      ORDER BY release_date DESC NULLS LAST
-      LIMIT $1 OFFSET $2
-    `;
+/* -------------------------------------------------------------------------- */
+/*                         Advanced, denormalized filters                      */
+/* -------------------------------------------------------------------------- */
 
-    const { rows } = await pool.query(sql, [limit, offset]);
+export async function listMoviesAdvanced(args: AdvancedListArgs) {
+    const {
+        page,
+        limit,
+        yearStart,
+        yearEnd,
+        budgetLow,
+        budgetHigh,
+        revenueLow,
+        revenueHigh,
+        runtimeLow,
+        runtimeHigh,
+        genre,
+        studio,
+        producer,
+        director,
+        mpaRating,
+        collection
+    } = args;
+
+    const offset = (page - 1) * limit;
+    const where: string[] = [];
+    const params: any[] = [];
+
+    // Numeric & year filters
+    if (yearStart !== undefined) {
+        params.push(yearStart);
+        where.push(`LEFT(release_date::text, 4)::int >= $${params.length}`);
+    }
+
+    if (yearEnd !== undefined) {
+        params.push(yearEnd);
+        where.push(`LEFT(release_date::text, 4)::int <= $${params.length}`);
+    }
+
+    if (budgetLow !== undefined) {
+        params.push(budgetLow);
+        where.push(`budget >= $${params.length}`);
+    }
+
+    if (budgetHigh !== undefined) {
+        params.push(budgetHigh);
+        where.push(`budget <= $${params.length}`);
+    }
+
+    if (revenueLow !== undefined) {
+        params.push(revenueLow);
+        where.push(`revenue >= $${params.length}`);
+    }
+
+    if (revenueHigh !== undefined) {
+        params.push(revenueHigh);
+        where.push(`revenue <= $${params.length}`);
+    }
+
+    if (runtimeLow !== undefined) {
+        params.push(runtimeLow);
+        where.push(`runtime >= $${params.length}`);
+    }
+
+    if (runtimeHigh !== undefined) {
+        params.push(runtimeHigh);
+        where.push(`runtime <= $${params.length}`);
+    }
+
+    // Genre (comma-separated TEXT on movie)
+    if (genre) {
+        params.push(genre);
+        where.push(`$${params.length} = ANY(string_to_array(NULLIF(genres, ''), ','))`);
+    }
+
+    // MPA rating
+    if (mpaRating) {
+        params.push(mpaRating);
+        where.push(`mpa_rating = $${params.length}`);
+    }
+
+    // --- Dynamic denormalized filters (Studios / Producers / Directors / Collection)
+    // Detect available columns once (snake_case or Title Case quoted).
+    const cols = await ensureMovieColumns();
+
+    // Studios
+    if (studio) {
+        // Prefer snake_case 'studios', otherwise Title Case "Studios"
+        const colIdent = pickColumnIdentifier(cols, ['studios', 'Studios']);
+        if (colIdent) {
+            params.push(`%${studio}%`);
+            where.push(buildCsvMatchClause(colIdent, params.length));
+        }
+    }
+
+    // Producers
+    if (producer) {
+        const colIdent = pickColumnIdentifier(cols, ['producers', 'Producers']);
+        if (colIdent) {
+            params.push(`%${producer}%`);
+            where.push(buildCsvMatchClause(colIdent, params.length));
+        }
+    }
+
+    // Directors
+    if (director) {
+        const colIdent = pickColumnIdentifier(cols, ['directors', 'Directors']);
+        if (colIdent) {
+            params.push(`%${director}%`);
+            where.push(buildCsvMatchClause(colIdent, params.length));
+        }
+    }
+
+    // Collection (single text field, not CSV)
+    if (collection) {
+        // Prefer snake_case 'collection', otherwise Title Case "Collection"
+        const colIdent =
+            pickColumnIdentifier(cols, ['collection', 'Collection']);
+        if (colIdent) {
+            params.push(`%${collection}%`);
+            where.push(`${colIdent} ILIKE $${params.length}`);
+        }
+    }
+
+    const sql = `
+    ${BASE_SELECT}
+    ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+    ORDER BY release_date DESC NULLS LAST
+    LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+  `;
+
+    params.push(limit, offset);
+    const { rows } = await pool.query(sql, params);
     return rows;
 }
 
