@@ -1,9 +1,11 @@
+// src/controllers/movieController.ts
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
-import {listMoviesAdvanced} from '@/services/movies.service';
 
+// NOTE: listMoviesAdvanced is NOT used in this controller; it lives in routes.
+// import { listMoviesAdvanced } from '@/services/movies.service';
 
 interface Movie {
     title: string;
@@ -20,15 +22,16 @@ interface Movie {
 
 const csvPath = path.resolve(__dirname, '../../data/movies_last30years.csv');
 
+/**
+ * GET /api/movies (CSV-backed)
+ * Returns a consistent shape for tests: { success: true, data: Movie[] }
+ */
 export const getMovies = async (_req: Request, res: Response): Promise<void> => {
     try {
         const results: Movie[] = [];
-
         const stream = fs.createReadStream(csvPath).pipe(csv());
 
-        // row fields can be undefined -> type accordingly and coalesce
         stream.on('data', (row: Record<string, string | undefined>) => {
-            // optional: skip rows missing a required field
             if (!row.title) return;
 
             const movie: Movie = {
@@ -49,6 +52,8 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
 
         stream.on('end', () => {
             res.status(200).json({
+                success: true,
+                count: results.length,
                 data: results.slice(0, 100) // trim for speed
             });
         });
@@ -67,7 +72,7 @@ export const getMovies = async (_req: Request, res: Response): Promise<void> => 
 };
 
 // ============================================
-// NEW FUNCTION - Insert Movie
+// POST /api/movies/insert  — Insert Movie (CSV)
 // ============================================
 export const insertMovie = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -84,7 +89,6 @@ export const insertMovie = async (req: Request, res: Response): Promise<void> =>
             country
         } = req.body;
 
-        // Validate required field
         if (!title || title.trim() === '') {
             res.status(400).json({
                 success: false,
@@ -93,21 +97,19 @@ export const insertMovie = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
-        // Create new movie object
         const newMovie: Movie = {
             title: title.trim(),
-            original_title: original_title || title.trim(),
-            release_date: release_date || '',
+            original_title: (original_title ?? title).toString().trim(),
+            release_date: (release_date ?? '').toString(),
             runtime: runtime ? Number(runtime) : 0,
-            genres: genres || '',
-            overview: overview || '',
+            genres: (genres ?? '').toString(),
+            overview: (overview ?? '').toString(),
             budget: budget ? Number(budget) : 0,
             revenue: revenue ? Number(revenue) : 0,
-            mpa_rating: mpa_rating || '',
-            country: country || ''
+            mpa_rating: (mpa_rating ?? '').toString(),
+            country: (country ?? '').toString()
         };
 
-        // Read existing CSV data
         const existingMovies: Movie[] = [];
         const readStream = fs.createReadStream(csvPath).pipe(csv());
 
@@ -128,30 +130,29 @@ export const insertMovie = async (req: Request, res: Response): Promise<void> =>
         });
 
         readStream.on('end', () => {
-            // Add new movie to the list
             existingMovies.push(newMovie);
 
-            // Convert to CSV format
-            const csvHeader = 'title,original_title,release_date,runtime,genres,overview,budget,revenue,mpa_rating,country\n';
-            const csvRows = existingMovies.map(movie => {
-                return [
-                    `"${movie.title.replace(/"/g, '""')}"`,
-                    `"${movie.original_title.replace(/"/g, '""')}"`,
-                    movie.release_date,
-                    movie.runtime,
-                    `"${movie.genres.replace(/"/g, '""')}"`,
-                    `"${movie.overview.replace(/"/g, '""')}"`,
-                    movie.budget,
-                    movie.revenue,
-                    movie.mpa_rating,
-                    movie.country
-                ].join(',');
-            }).join('\n');
+            const csvHeader =
+                'title,original_title,release_date,runtime,genres,overview,budget,revenue,mpa_rating,country\n';
 
-            const csvContent = csvHeader + csvRows;
+            const csvRows = existingMovies
+                .map((movie) =>
+                    [
+                        `"${movie.title.replace(/"/g, '""')}"`,
+                        `"${movie.original_title.replace(/"/g, '""')}"`,
+                        movie.release_date,
+                        movie.runtime,
+                        `"${movie.genres.replace(/"/g, '""')}"`,
+                        `"${movie.overview.replace(/"/g, '""')}"`,
+                        movie.budget,
+                        movie.revenue,
+                        movie.mpa_rating,
+                        movie.country
+                    ].join(',')
+                )
+                .join('\n');
 
-            // Write back to CSV file
-            fs.writeFile(csvPath, csvContent, 'utf8', (err) => {
+            fs.writeFile(csvPath, csvHeader + csvRows, 'utf8', (err) => {
                 if (err) {
                     res.status(500).json({
                         success: false,
@@ -176,7 +177,6 @@ export const insertMovie = async (req: Request, res: Response): Promise<void> =>
                 error: err.message
             });
         });
-
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         res.status(500).json({
@@ -187,12 +187,12 @@ export const insertMovie = async (req: Request, res: Response): Promise<void> =>
 };
 
 // ============================================
-// NEW FUNCTION - Delete Movie
+// DELETE /api/movies/delete/:id  — Delete Movie (CSV)
+// Uses the *title* (URL-decoded) as the identifier in the CSV
 // ============================================
 export const deleteMovie = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-
         if (!id) {
             res.status(400).json({
                 success: false,
@@ -201,9 +201,7 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
-        const movieTitle = decodeURIComponent(id); // Using title as identifier
-
-        // Read existing CSV data
+        const movieTitle = decodeURIComponent(id);
         const existingMovies: Movie[] = [];
         let movieFound = false;
 
@@ -225,7 +223,6 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
                 country: row.country ?? ''
             };
 
-            // Only keep movies that don't match the title to delete
             if (movie.title.toLowerCase() !== movieTitle.toLowerCase()) {
                 existingMovies.push(movie);
             } else {
@@ -242,27 +239,27 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
                 return;
             }
 
-            // Convert to CSV format
-            const csvHeader = 'title,original_title,release_date,runtime,genres,overview,budget,revenue,mpa_rating,country\n';
-            const csvRows = existingMovies.map(movie => {
-                return [
-                    `"${movie.title.replace(/"/g, '""')}"`,
-                    `"${movie.original_title.replace(/"/g, '""')}"`,
-                    movie.release_date,
-                    movie.runtime,
-                    `"${movie.genres.replace(/"/g, '""')}"`,
-                    `"${movie.overview.replace(/"/g, '""')}"`,
-                    movie.budget,
-                    movie.revenue,
-                    movie.mpa_rating,
-                    movie.country
-                ].join(',');
-            }).join('\n');
+            const csvHeader =
+                'title,original_title,release_date,runtime,genres,overview,budget,revenue,mpa_rating,country\n';
 
-            const csvContent = csvHeader + csvRows;
+            const csvRows = existingMovies
+                .map((movie) =>
+                    [
+                        `"${movie.title.replace(/"/g, '""')}"`,
+                        `"${movie.original_title.replace(/"/g, '""')}"`,
+                        movie.release_date,
+                        movie.runtime,
+                        `"${movie.genres.replace(/"/g, '""')}"`,
+                        `"${movie.overview.replace(/"/g, '""')}"`,
+                        movie.budget,
+                        movie.revenue,
+                        movie.mpa_rating,
+                        movie.country
+                    ].join(',')
+                )
+                .join('\n');
 
-            // Write back to CSV file
-            fs.writeFile(csvPath, csvContent, 'utf8', (err) => {
+            fs.writeFile(csvPath, csvHeader + csvRows, 'utf8', (err) => {
                 if (err) {
                     res.status(500).json({
                         success: false,
@@ -287,7 +284,6 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
                 error: err.message
             });
         });
-
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         res.status(500).json({
@@ -296,7 +292,3 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
         });
     }
 };
-
-
-
-
