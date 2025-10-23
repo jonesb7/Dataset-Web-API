@@ -32,10 +32,20 @@ export type ListArgs = {
     pageSize: number;
     yearStart?: number | undefined;
     yearEnd?: number | undefined;
-    year?: string | undefined;         // supports basic year filtering on '/'
+    year?: string | undefined;
     title?: string | undefined;
     genre?: string | undefined;
     mpaRating?: string | undefined;
+    studios?: string | undefined;
+    producers?: string | undefined;
+    directors?: string | undefined;
+    collection?: string | undefined;
+    posterUrl?: string | undefined;
+    backdropUrl?: string | undefined;
+    studioLogos?: string | undefined;
+    studioCountries?: string | undefined;
+    actorNames?: string[] | undefined;       // for partial match on any actor names (optional)
+    actorCharacters?: string[] | undefined;  // similarly for characters if needed
 };
 
 export async function listMovies({
@@ -46,14 +56,22 @@ export async function listMovies({
                                      year,
                                      title,
                                      genre,
-                                     mpaRating
+                                     mpaRating,
+                                     studios,
+                                     producers,
+                                     directors,
+                                     collection,
+                                     posterUrl,
+                                     backdropUrl,
+                                     studioLogos,
+                                     studioCountries,
+                                     actorNames
                                  }: ListArgs) {
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
     const where: string[] = [];
-    const params: unknown[] = [];
+    const params: any[] = [];
 
-    // Year range filter (between yearStart and yearEnd)
     if (yearStart !== undefined && yearEnd !== undefined) {
         params.push(yearStart, yearEnd);
         where.push(`LEFT(release_date::text, 4)::int BETWEEN $${params.length - 1} AND $${params.length}`);
@@ -65,7 +83,6 @@ export async function listMovies({
         where.push(`LEFT(release_date::text, 4)::int <= $${params.length}`);
     }
 
-    // Single year filter
     if (year) {
         const y = parseInt(year, 10);
         params.push(y);
@@ -87,6 +104,68 @@ export async function listMovies({
         where.push(`mpa_rating = $${params.length}`);
     }
 
+    // For all semicolon-separated string fields we do a case-insensitive LIKE match of the whole text
+    if (studios) {
+        params.push(`%${studios.toLowerCase()}%`);
+        where.push(`LOWER(studios) LIKE $${params.length}`);
+    }
+
+    if (producers) {
+        params.push(`%${producers.toLowerCase()}%`);
+        where.push(`LOWER(producers) LIKE $${params.length}`);
+    }
+
+    if (directors) {
+        params.push(`%${directors.toLowerCase()}%`);
+        where.push(`LOWER(directors) LIKE $${params.length}`);
+    }
+
+    if (collection) {
+        params.push(`%${collection.toLowerCase()}%`);
+        where.push(`LOWER(collection) LIKE $${params.length}`);
+    }
+
+    if (posterUrl) {
+        params.push(`%${posterUrl.toLowerCase()}%`);
+        where.push(`LOWER(poster_url) LIKE $${params.length}`);
+    }
+
+    if (backdropUrl) {
+        params.push(`%${backdropUrl.toLowerCase()}%`);
+        where.push(`LOWER(backdrop_url) LIKE $${params.length}`);
+    }
+
+    if (studioLogos) {
+        params.push(`%${studioLogos.toLowerCase()}%`);
+        where.push(`LOWER(studio_logos) LIKE $${params.length}`);
+    }
+
+    if (studioCountries) {
+        params.push(`%${studioCountries.toLowerCase()}%`);
+        where.push(`LOWER(studio_countries) LIKE $${params.length}`);
+    }
+
+    // Optional partial filtering on actor names (matches any of the actors)
+    if (actorNames && actorNames.length > 0) {
+        actorNames.forEach((name) => {
+            params.push(`%${name.toLowerCase()}%`);
+            where.push(`(
+        LOWER(actor1_name) LIKE $${params.length}
+        OR LOWER(actor2_name) LIKE $${params.length}
+        OR LOWER(actor3_name) LIKE $${params.length}
+        OR LOWER(actor4_name) LIKE $${params.length}
+        OR LOWER(actor5_name) LIKE $${params.length}
+        OR LOWER(actor6_name) LIKE $${params.length}
+        OR LOWER(actor7_name) LIKE $${params.length}
+        OR LOWER(actor8_name) LIKE $${params.length}
+        OR LOWER(actor9_name) LIKE $${params.length}
+        OR LOWER(actor10_name) LIKE $${params.length}
+      )`);
+        });
+    }
+
+    // Similarly, you could add filtering on actorCharacters if needed
+
     const sql = `
     ${BASE_SELECT}
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
@@ -99,6 +178,7 @@ export async function listMovies({
     const { rows } = await pool.query(sql, params);
     return rows;
 }
+
 
 
 

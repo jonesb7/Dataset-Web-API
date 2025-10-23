@@ -36,31 +36,51 @@ r.get('/stats', async (req: Request, res: Response): Promise<void> => {
 r.get('/page', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
     const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit ?? '25'), 10)));
-    const offset = (page - 1) * limit;
 
     const yearStart = req.query.yearStart ? parseInt(String(req.query.yearStart), 10) : undefined;
     const yearEnd = req.query.yearEnd ? parseInt(String(req.query.yearEnd), 10) : undefined;
     const genre = req.query.genre as string | undefined;
     const mpaRating = req.query.mpaRating as string | undefined;
     const title = req.query.title as string | undefined;
-    // Add other filters as needed following Postman spec
+    const studios = req.query.studios as string | undefined;
+    const producers = req.query.producers as string | undefined;
+    const directors = req.query.directors as string | undefined;
+    const collection = req.query.collection as string | undefined;
+    const posterUrl = req.query.posterUrl as string | undefined;
+    const backdropUrl = req.query.backdropUrl as string | undefined;
+    const studioLogos = req.query.studioLogos as string | undefined;
+    const studioCountries = req.query.studioCountries as string | undefined;
+
+    // For actors, accept comma-separated list and split to array
+    const actorNames = req.query.actorNames
+        ? (String(req.query.actorNames).split(',').map(s => s.trim()).filter(Boolean))
+        : undefined;
 
     try {
         const data = await listMovies({
+            page,
+            pageSize: limit,
             yearStart,
             yearEnd,
             genre,
             mpaRating,
             title,
-            page,
-            pageSize: limit
+            studios,
+            producers,
+            directors,
+            collection,
+            posterUrl,
+            backdropUrl,
+            studioLogos,
+            studioCountries,
+            actorNames
         });
 
         res.json({
             success: true,
             page,
             limit,
-            offset,
+            offset: (page - 1) * limit,
             data
         });
     } catch (error) {
@@ -68,6 +88,7 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ success: false, message });
     }
 });
+
 
 
 
