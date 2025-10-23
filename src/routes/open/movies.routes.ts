@@ -1,7 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { listMoviesByOffset
-} from '../../services/movies.service';
-
 import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../../services/movies.service';
 import { insertMovie, deleteMovie } from '../../controllers/movieController';
 const r: Router = Router();
@@ -25,7 +22,7 @@ r.get('/', async (req: Request, res: Response): Promise<void> => {
     if (title) args.title = title;
     if (genre) args.genre = genre;
 
-    const result = await listMovies(args);
+    const result = await listMovies(<ListArgs>args);
     res.json(result);
 });
 
@@ -35,26 +32,43 @@ r.get('/stats', async (req: Request, res: Response): Promise<void> => {
     res.json(await stats(by));
 });
 
-// GET /api/movies/page?limit=10&offset=50
+// GET /api/movies/page - fully filtered page with pagination and multiple filters
 r.get('/page', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
     const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit ?? '25'), 10)));
     const offset = (page - 1) * limit;
 
+    const yearStart = req.query.yearStart ? parseInt(String(req.query.yearStart), 10) : undefined;
+    const yearEnd = req.query.yearEnd ? parseInt(String(req.query.yearEnd), 10) : undefined;
+    const genre = req.query.genre as string | undefined;
+    const mpaRating = req.query.mpaRating as string | undefined;
+    const title = req.query.title as string | undefined;
+    // Add other filters as needed following Postman spec
+
     try {
-        const data = await listMoviesByOffset(limit, offset);
+        const data = await listMovies({
+            yearStart,
+            yearEnd,
+            genre,
+            mpaRating,
+            title,
+            page,
+            pageSize: limit
+        });
+
         res.json({
             success: true,
             page,
             limit,
             offset,
-            data,
+            data
         });
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         res.status(500).json({ success: false, message });
     }
 });
+
 
 
 

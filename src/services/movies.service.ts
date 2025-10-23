@@ -1,16 +1,5 @@
 // src/services/movies.service.ts
 import { pool } from '../db/pool';
-
-type OptionalStr = string | undefined;
-
-export type ListArgs = {
-    page: number;
-    pageSize: number;
-    year?: OptionalStr;
-    title?: OptionalStr;
-    genre?: OptionalStr;
-};
-
 /**
  * Base projection to normalize the movie row shape for the API.
  * - movie (singular) table
@@ -38,16 +27,48 @@ const BASE_SELECT = `
  * List movies with optional filters and pagination.
  * Year matching is robust even if release_date is stored as ISO/timestamp/text.
  */
-export async function listMovies({ page, pageSize, year, title, genre }: ListArgs) {
-    const offset = (page - 1) * pageSize;
+export type ListArgs = {
+    page: number;
+    pageSize: number;
+    yearStart?: number | undefined;
+    yearEnd?: number | undefined;
+    year?: string | undefined;         // supports basic year filtering on '/'
+    title?: string | undefined;
+    genre?: string | undefined;
+    mpaRating?: string | undefined;
+};
 
+export async function listMovies({
+                                     page = 1,
+                                     pageSize = 25,
+                                     yearStart,
+                                     yearEnd,
+                                     year,
+                                     title,
+                                     genre,
+                                     mpaRating
+                                 }: ListArgs) {
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
     const where: string[] = [];
     const params: unknown[] = [];
 
-    // YEAR filter (robust: works for DATE, TIMESTAMP, or text/ISO strings)
+    // Year range filter (between yearStart and yearEnd)
+    if (yearStart !== undefined && yearEnd !== undefined) {
+        params.push(yearStart, yearEnd);
+        where.push(`LEFT(release_date::text, 4)::int BETWEEN $${params.length - 1} AND $${params.length}`);
+    } else if (yearStart !== undefined) {
+        params.push(yearStart);
+        where.push(`LEFT(release_date::text, 4)::int >= $${params.length}`);
+    } else if (yearEnd !== undefined) {
+        params.push(yearEnd);
+        where.push(`LEFT(release_date::text, 4)::int <= $${params.length}`);
+    }
+
+    // Single year filter
     if (year) {
-        params.push(parseInt(year, 10));
-        // Compare the first 4 chars of release_date::text to the year
+        const y = parseInt(year, 10);
+        params.push(y);
         where.push(`LEFT(release_date::text, 4)::int = $${params.length}`);
     }
 
@@ -57,10 +78,13 @@ export async function listMovies({ page, pageSize, year, title, genre }: ListArg
     }
 
     if (genre) {
-        // genres is TEXT in DB; in SELECT it's converted to array.
-        // For filtering, re-use the expression here.
         params.push(genre);
         where.push(`$${params.length} = ANY(string_to_array(NULLIF(genres, ''), ','))`);
+    }
+
+    if (mpaRating) {
+        params.push(mpaRating);
+        where.push(`mpa_rating = $${params.length}`);
     }
 
     const sql = `
@@ -70,11 +94,13 @@ export async function listMovies({ page, pageSize, year, title, genre }: ListArg
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
 
-    params.push(pageSize, offset);
+    params.push(limit, offset);
 
     const { rows } = await pool.query(sql, params);
     return rows;
 }
+
+
 
 export async function getMovie(id: number) {
     const sql = `

@@ -163,7 +163,7 @@ paths:
       summary: Paginated list of movies with advanced filters
       description: |
         Returns a list of movies using a `page` number and `limit`.
-        Supports advanced filtering by release year range, budget, revenue, runtime, genre, studio, producer, director, MPA rating, and collection.
+        Supports advanced filtering by release year range, budget, revenue, runtime, genre, and MPA rating.
       parameters:
         - in: query
           name: page
@@ -212,25 +212,9 @@ paths:
           schema: { type: string }
           description: Filter by genre (exact match)
         - in: query
-          name: studio
-          schema: { type: string }
-          description: Filter by studio name (exact match)
-        - in: query
-          name: producer
-          schema: { type: string }
-          description: Filter by producer name (exact match)
-        - in: query
-          name: director
-          schema: { type: string }
-          description: Filter by director name (exact match)
-        - in: query
           name: mpaRating
           schema: { type: string }
           description: Filter by MPA rating (e.g., PG-13, R)
-        - in: query
-          name: collection
-          schema: { type: string }
-          description: Filter by collection name
       responses:
         '200':
           description: Paginated movie results with applied filters
