@@ -60,24 +60,74 @@ CREATE TABLE IF NOT EXISTS role (
 -- ============================================================================
 -- CREATE MAIN ENTITY TABLE
 -- ============================================================================
+-- ============================================================================
+-- CREATE MAIN ENTITY TABLE with extended columns (no country column)
+-- ============================================================================
 
 CREATE TABLE IF NOT EXISTS movie (
-  movie_id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  original_title VARCHAR(255),
-  release_date DATE,
-  runtime INT,
-  budget BIGINT,
-  revenue BIGINT,
-  mpa_rating VARCHAR(10),
-  overview TEXT,
-  poster_url VARCHAR(500),
-  backdrop_url VARCHAR(500),
-  collection_id INT REFERENCES collection(collection_id) ON DELETE SET NULL,
-  studio_id INT REFERENCES studio(studio_id) ON DELETE SET NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+                                     movie_id SERIAL PRIMARY KEY,
+                                     title VARCHAR(255) NOT NULL,
+    original_title VARCHAR(255),
+    release_date DATE,
+    runtime INT,
+    genres TEXT,             -- semicolon-separated strings
+    overview TEXT,
+    budget BIGINT,
+    revenue BIGINT,
+    studios TEXT,            -- semicolon-separated strings
+    producers TEXT,          -- semicolon-separated strings
+    directors TEXT,          -- semicolon-separated strings
+    mpa_rating VARCHAR(10),
+    collection VARCHAR(255),
+    poster_url VARCHAR(500),
+    backdrop_url VARCHAR(500),
+    studio_logos TEXT,       -- semicolon-separated strings
+    studio_countries TEXT,   -- semicolon-separated strings
+
+    actor1_name VARCHAR(255),
+    actor1_character VARCHAR(255),
+    actor1_profile VARCHAR(500),
+
+    actor2_name VARCHAR(255),
+    actor2_character VARCHAR(255),
+    actor2_profile VARCHAR(500),
+
+    actor3_name VARCHAR(255),
+    actor3_character VARCHAR(255),
+    actor3_profile VARCHAR(500),
+
+    actor4_name VARCHAR(255),
+    actor4_character VARCHAR(255),
+    actor4_profile VARCHAR(500),
+
+    actor5_name VARCHAR(255),
+    actor5_character VARCHAR(255),
+    actor5_profile VARCHAR(500),
+
+    actor6_name VARCHAR(255),
+    actor6_character VARCHAR(255),
+    actor6_profile VARCHAR(500),
+
+    actor7_name VARCHAR(255),
+    actor7_character VARCHAR(255),
+    actor7_profile VARCHAR(500),
+
+    actor8_name VARCHAR(255),
+    actor8_character VARCHAR(255),
+    actor8_profile VARCHAR(500),
+
+    actor9_name VARCHAR(255),
+    actor9_character VARCHAR(255),
+    actor9_profile VARCHAR(500),
+
+    actor10_name VARCHAR(255),
+    actor10_character VARCHAR(255),
+    actor10_profile VARCHAR(500),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
 
 -- ============================================================================
 -- CREATE JUNCTION TABLES

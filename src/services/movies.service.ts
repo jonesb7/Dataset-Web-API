@@ -8,20 +8,58 @@ import { pool } from '../db/pool';
  * - genres TEXT (comma separated) -> string[]
  */
 const BASE_SELECT = `
-  SELECT
-    movie_id AS id,
-    title,
-    original_title,
-    release_date,
-    runtime AS runtime_min,
-    string_to_array(NULLIF(genres, ''), ',') AS genres,
-    overview,
-    budget,
-    revenue,
-    mpa_rating,
-    country
-  FROM movie
+    SELECT
+        movie_id AS id,
+        title,
+        original_title,
+        release_date,
+        runtime AS runtime_min,
+        genres,
+        overview,
+        budget,
+        revenue,
+        studios,
+        producers,
+        directors,
+        mpa_rating,
+        collection,
+        poster_url,
+        backdrop_url,
+        studio_logos,
+        studio_countries,
+        actor1_name,
+        actor1_character,
+        actor1_profile,
+        actor2_name,
+        actor2_character,
+        actor2_profile,
+        actor3_name,
+        actor3_character,
+        actor3_profile,
+        actor4_name,
+        actor4_character,
+        actor4_profile,
+        actor5_name,
+        actor5_character,
+        actor5_profile,
+        actor6_name,
+        actor6_character,
+        actor6_profile,
+        actor7_name,
+        actor7_character,
+        actor7_profile,
+        actor8_name,
+        actor8_character,
+        actor8_profile,
+        actor9_name,
+        actor9_character,
+        actor9_profile,
+        actor10_name,
+        actor10_character,
+        actor10_profile
+    FROM movie
 `;
+
 
 /**
  * List movies with optional filters and pagination.

@@ -25,75 +25,213 @@ components:
       type: object
       required: [movie_id, title]
       properties:
-        movie_id: { type: integer, example: 101 }
-        title: { type: string, example: "Inception" }
-        original_title: { type: string, nullable: true, example: "Inception" }
-        release_date: { type: string, format: date, example: "2010-07-16" }
-        runtime: { type: integer, example: 148, description: "minutes" }
-        budget: { type: integer, nullable: true, example: 160000000 }
-        revenue: { type: integer, nullable: true, example: 829895144 }
-        mpa_rating: { type: string, nullable: true, example: "PG-13" }
-        overview: { type: string, nullable: true }
-        poster_url: { type: string, format: uri, nullable: true }
-        backdrop_url: { type: string, format: uri, nullable: true }
+        movie_id:
+          type: integer
+          example: 101
+        title:
+          type: string
+          example: "Inception"
+        original_title:
+          type: string
+          nullable: true
+          example: "Inception"
+        release_date:
+          type: string
+          format: date
+          example: "2010-07-16"
+        runtime:
+          type: integer
+          example: 148
+          description: "minutes"
         genres:
-          type: array
-          items: { type: string, example: "Science Fiction" }
+          type: string
+          description: Semicolon-separated list of genres
+          example: "Science Fiction; Thriller"
+        overview:
+          type: string
+          nullable: true
+        budget:
+          type: integer
+          nullable: true
+          example: 160000000
+        revenue:
+          type: integer
+          nullable: true
+          example: 829895144
         studios:
-          type: array
-          items:
-            $ref: '#/components/schemas/StudioSummary'
-        cast:
-          type: array
-          items:
-            $ref: '#/components/schemas/CastMember'
-        crew:
-          type: array
-          items:
-            $ref: '#/components/schemas/CrewMember'
+          type: string
+          description: Semicolon-separated list of studios
+          example: "Warner Bros.; Legendary Pictures"
+        producers:
+          type: string
+          description: Semicolon-separated list of producers
+          example: "Emma Thomas; Christopher Nolan"
+        directors:
+          type: string
+          description: Semicolon-separated list of directors
+          example: "Christopher Nolan"
+        mpa_rating:
+          type: string
+          nullable: true
+          example: "PG-13"
+        collection:
+          type: string
+          nullable: true
+          example: "The Dark Knight Collection"
+        poster_url:
+          type: string
+          format: uri
+          nullable: true
+        backdrop_url:
+          type: string
+          format: uri
+          nullable: true
+        studio_logos:
+          type: string
+          description: Semicolon-separated list of studio logo urls
+          nullable: true
+        studio_countries:
+          type: string
+          description: Semicolon-separated list of studio countries
+          nullable: true
 
-    StudioSummary:
-      type: object
-      properties:
-        studio_id: { type: integer, example: 77 }
-        name: { type: string, example: "Warner Bros." }
-        country: { type: string, example: "US" }
-
-    CastMember:
-      type: object
-      properties:
-        person_id: { type: integer, example: 2001 }
-        name: { type: string, example: "Leonardo DiCaprio" }
-        character_name: { type: string, example: "Cobb" }
-
-    CrewMember:
-      type: object
-      properties:
-        person_id: { type: integer, example: 2002 }
-        name: { type: string, example: "Christopher Nolan" }
-        role: { type: string, example: "Director" }
+        actor1_name:
+          type: string
+          nullable: true
+        actor1_character:
+          type: string
+          nullable: true
+        actor1_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor2_name:
+          type: string
+          nullable: true
+        actor2_character:
+          type: string
+          nullable: true
+        actor2_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor3_name:
+          type: string
+          nullable: true
+        actor3_character:
+          type: string
+          nullable: true
+        actor3_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor4_name:
+          type: string
+          nullable: true
+        actor4_character:
+          type: string
+          nullable: true
+        actor4_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor5_name:
+          type: string
+          nullable: true
+        actor5_character:
+          type: string
+          nullable: true
+        actor5_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor6_name:
+          type: string
+          nullable: true
+        actor6_character:
+          type: string
+          nullable: true
+        actor6_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor7_name:
+          type: string
+          nullable: true
+        actor7_character:
+          type: string
+          nullable: true
+        actor7_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor8_name:
+          type: string
+          nullable: true
+        actor8_character:
+          type: string
+          nullable: true
+        actor8_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor9_name:
+          type: string
+          nullable: true
+        actor9_character:
+          type: string
+          nullable: true
+        actor9_profile:
+          type: string
+          format: uri
+          nullable: true
+        actor10_name:
+          type: string
+          nullable: true
+        actor10_character:
+          type: string
+          nullable: true
+        actor10_profile:
+          type: string
+          format: uri
+          nullable: true
 
     PagedMovies:
       type: object
       properties:
         data:
           type: array
-          items: { $ref: '#/components/schemas/Movie' }
-        page: { type: integer, example: 1 }
-        pageSize: { type: integer, example: 25 }
-        total: { type: integer, example: 2371 }
+          items:
+            $ref: '#/components/schemas/Movie'
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 25
+        total:
+          type: integer
+          example: 2371
 
     StatBucket:
       type: object
       properties:
-        key: { type: string, example: "2010" }
-        count: { type: integer, example: 145 }
+        key:
+          type: string
+          example: "2010"
+        count:
+          type: integer
+          example: 145
 
     Error:
       type: object
       properties:
-        success: { type: boolean, example: false }
-        message: { type: string, example: "Movie not found" }
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Movie not found"
 
 security:
   - ApiKeyAuth: []
@@ -102,39 +240,53 @@ paths:
   /movies:
     get:
       summary: List movies
-      description: |
+      description: >
         Returns movies with optional filters and pagination.
         Query parameters allow filtering by year, title, or genre.
       parameters:
         - in: query
           name: year
-          schema: { type: integer, minimum: 1900, maximum: 2100 }
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2100
           description: Filter by release year
         - in: query
           name: title
-          schema: { type: string }
+          schema:
+            type: string
           description: Filter by title (partial match)
         - in: query
           name: genre
-          schema: { type: string }
-          description: Filter by genre name
+          schema:
+            type: string
+          description: Filter by genre name (exact match)
         - in: query
           name: page
-          schema: { type: integer, default: 1, minimum: 1 }
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
         - in: query
           name: pageSize
-          schema: { type: integer, default: 25, minimum: 1, maximum: 100 }
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            maximum: 100
       responses:
         '200':
           description: Successfully retrieved movies list
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PagedMovies' }
+              schema:
+                $ref: '#/components/schemas/PagedMovies'
         '400':
           description: Invalid query parameters
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /movies/random:
     get:
@@ -148,72 +300,103 @@ paths:
               schema:
                 type: object
                 properties:
-                  success: { type: boolean, example: true }
+                  success:
+                    type: boolean
+                    example: true
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Movie' }
+                    items:
+                      $ref: '#/components/schemas/Movie'
         '500':
           description: Server error
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /movies/page:
     get:
       summary: Paginated list of movies with advanced filters
-      description: |
+      description: >
         Returns a list of movies using a `page` number and `limit`.
         Supports advanced filtering by release year range, budget, revenue, runtime, genre, and MPA rating.
       parameters:
         - in: query
           name: page
           required: false
-          schema: { type: integer, default: 1, minimum: 1 }
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
           description: Page number (starting from 1)
         - in: query
           name: limit
           required: false
-          schema: { type: integer, default: 25, minimum: 1, maximum: 100 }
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            maximum: 100
           description: Number of movies per page
         - in: query
           name: yearStart
-          schema: { type: integer, minimum: 1900, maximum: 2100 }
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2100
           description: Minimum release year
         - in: query
           name: yearEnd
-          schema: { type: integer, minimum: 1900, maximum: 2100 }
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2100
           description: Maximum release year
         - in: query
           name: budgetLow
-          schema: { type: integer, minimum: 0 }
+          schema:
+            type: integer
+            minimum: 0
           description: Minimum budget
         - in: query
           name: budgetHigh
-          schema: { type: integer, minimum: 0 }
+          schema:
+            type: integer
+            minimum: 0
           description: Maximum budget
         - in: query
           name: revenueLow
-          schema: { type: integer, minimum: 0 }
+          schema:
+            type: integer
+            minimum: 0
           description: Minimum revenue
         - in: query
           name: revenueHigh
-          schema: { type: integer, minimum: 0 }
+          schema:
+            type: integer
+            minimum: 0
           description: Maximum revenue
         - in: query
           name: runtimeLow
-          schema: { type: integer, minimum: 0 }
+          schema:
+            type: integer
+            minimum: 0
           description: Minimum runtime (in minutes)
         - in: query
           name: runtimeHigh
-          schema: { type: integer, minimum: 0 }
+          schema:
+            type: integer
+            minimum: 0
           description: Maximum runtime (in minutes)
         - in: query
           name: genre
-          schema: { type: string }
+          schema:
+            type: string
           description: Filter by genre (exact match)
         - in: query
           name: mpaRating
-          schema: { type: string }
+          schema:
+            type: string
           description: Filter by MPA rating (e.g., PG-13, R)
       responses:
         '200':
@@ -235,7 +418,8 @@ paths:
           description: Invalid query parameters
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /movies/stats:
     get:
@@ -256,12 +440,14 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/StatBucket' }
+                items:
+                  $ref: '#/components/schemas/StatBucket'
         '400':
           description: Missing or invalid 'by' parameter
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /movies/{id}:
     get:
@@ -270,16 +456,19 @@ paths:
         - in: path
           name: id
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
           description: Numeric movie ID
       responses:
         '200':
           description: Single movie object
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Movie' }
+              schema:
+                $ref: '#/components/schemas/Movie'
         '404':
           description: Movie not found
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
