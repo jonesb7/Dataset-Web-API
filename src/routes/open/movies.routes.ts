@@ -1,85 +1,67 @@
 // src/routes/open/movies.routes.ts
-
 import { Router, Request, Response } from 'express';
 import {
     listMovies,
     listMoviesAdvanced,
     listMoviesByOffset,
-    getRandomMovies,
     getMovie,
     stats,
-    ListArgs,
+    BasicListArgs,
     AdvancedListArgs,
 } from '../../services/movies.service';
 
-import { insertMovie, deleteMovie } from '../../controllers/movieController';
-
 const r: Router = Router();
 
-/** helper: turn query param into number or undefined */
+/** helpers to coerce values from req.query */
 const num = (v: unknown): number | undefined => {
     const n = Number(v);
     return Number.isFinite(n) ? n : undefined;
 };
-
-/** helper: trim string or return undefined if blank/missing */
 const str = (v: unknown): string | undefined =>
     typeof v === 'string' && v.trim() !== '' ? v.trim() : undefined;
 
-/* =========================================================================
+/**
  * GET /api/movies
- * Simple list with page/pageSize and optional year/title/genre filters
- * =========================================================================
- *
- * Example:
- *   /api/movies?page=2&pageSize=10&year=2018&genre=Action
+ * simple basic filtering (year/title/genre) w/ page+pageSize
  */
 r.get('/', async (req: Request, res: Response): Promise<void> => {
-    const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10));
+    const page = Math.max(
+        1,
+        Number.parseInt(String(req.query.page ?? '1'), 10),
+    );
     const pageSize = Math.min(
         100,
-        Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10))
+        Math.max(
+            1,
+            Number.parseInt(String(req.query.pageSize ?? '25'), 10),
+        ),
     );
 
-    const { year, title, genre } = req.query as {
-        year?: string;
-        title?: string;
-        genre?: string;
-    };
-
-    // Build args in a typesafe way
-    const args: Pick<ListArgs, 'page' | 'pageSize'> &
-        Partial<Pick<ListArgs, 'year' | 'title' | 'genre'>> = {
+    const args: BasicListArgs = {
         page,
         pageSize,
+        year: str(req.query.year),
+        title: str(req.query.title),
+        genre: str(req.query.genre),
     };
 
-    if (year) args.year = year;
-    if (title) args.title = title;
-    if (genre) args.genre = genre;
-
     try {
-        const result = await listMovies(args);
+        const data = await listMovies(args);
         res.json({
             success: true,
             page,
             pageSize,
-            count: result.length,
-            data: result,
+            offset: (page - 1) * pageSize,
+            data,
         });
     } catch (err) {
-        console.error('Error in GET /api/movies:', err);
+        console.error('GET /api/movies error:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-/* =========================================================================
- * GET /api/movies/stats?by=year|genre
- * Aggregations by year or by genre
- * =========================================================================
- *
- * /api/movies/stats?by=year
- * /api/movies/stats?by=genre
+/**
+ * GET /api/movies/stats?by=genre|year
  */
 r.get('/stats', async (req: Request, res: Response): Promise<void> => {
     const by = String(req.query.by ?? 'year');
@@ -87,98 +69,54 @@ r.get('/stats', async (req: Request, res: Response): Promise<void> => {
         const data = await stats(by);
         res.json({ success: true, by, data });
     } catch (err) {
-        console.error('Error in GET /api/movies/stats:', err);
+        console.error('GET /api/movies/stats error:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-/* =========================================================================
+/**
  * GET /api/movies/page
- * Advanced filtered search with paging.
- *
- * Supported query params (all optional except page/limit defaults kick in):
- *   page, limit
- *   yearStart, yearEnd
- *   budgetLow, budgetHigh
- *   revenueLow, revenueHigh
- *   runtimeLow, runtimeHigh
- *   genre, mpaRating, title
- *
- * Examples:
- *   /api/movies/page?yearStart=2010&yearEnd=2020&genre=Action&limit=5&page=1
- *   /api/movies/page?runtimeLow=80&runtimeHigh=120&mpaRating=PG-13&limit=5
- *   /api/movies/page?budgetLow=1000000&budgetHigh=50000000
+ * full insane filter version
  */
 r.get('/page', async (req: Request, res: Response): Promise<void> => {
-    // Shows up in curl -i so we can prove which handler returned
+    // helpful header so you can confirm which route handled it in curl -i
     res.set('X-Route', '/api/movies/page');
 
-    // required-ish pagination pieces
     const page = num(req.query.page) ?? 1;
     const limit = Math.min(100, num(req.query.limit) ?? 25);
 
-    // Build filters object in a way that satisfies
-    // exactOptionalPropertyTypes + runtime flexibility.
     const filters: AdvancedListArgs = {
         page,
         limit,
+
+        yearStart: num(req.query.yearStart),
+        yearEnd: num(req.query.yearEnd),
+
+        budgetLow: num(req.query.budgetLow),
+        budgetHigh: num(req.query.budgetHigh),
+
+        revenueLow: num(req.query.revenueLow),
+        revenueHigh: num(req.query.revenueHigh),
+
+        runtimeLow: num(req.query.runtimeLow),
+        runtimeHigh: num(req.query.runtimeHigh),
+
+        genre: str(req.query.genre),
+        mpaRating: str(req.query.mpaRating),
+        title: str(req.query.title),
+
+        studio: str(req.query.studio),
+        producer: str(req.query.producer),
+        director: str(req.query.director),
+        collection: str(req.query.collection),
     };
-
-    const yStart = num(req.query.yearStart);
-    if (yStart !== undefined) filters.yearStart = yStart;
-
-    const yEnd = num(req.query.yearEnd);
-    if (yEnd !== undefined) filters.yearEnd = yEnd;
-
-    const bLow = num(req.query.budgetLow);
-    if (bLow !== undefined) filters.budgetLow = bLow;
-
-    const bHigh = num(req.query.budgetHigh);
-    if (bHigh !== undefined) filters.budgetHigh = bHigh;
-
-    const revLow = num(req.query.revenueLow);
-    if (revLow !== undefined) filters.revenueLow = revLow;
-
-    const revHigh = num(req.query.revenueHigh);
-    if (revHigh !== undefined) filters.revenueHigh = revHigh;
-
-    const rtLow = num(req.query.runtimeLow);
-    if (rtLow !== undefined) filters.runtimeLow = rtLow;
-
-    const rtHigh = num(req.query.runtimeHigh);
-    if (rtHigh !== undefined) filters.runtimeHigh = rtHigh;
-
-    const g = str(req.query.genre);
-    if (g !== undefined) filters.genre = g;
-
-    const rating = str(req.query.mpaRating);
-    if (rating !== undefined) filters.mpaRating = rating;
-
-    const t = str(req.query.title);
-    if (t !== undefined) filters.title = t;
 
     try {
         const data = await listMoviesAdvanced(filters);
 
-        // Convenience header so you can copy/paste in debugging
-        res.set(
-            'X-Filters',
-            JSON.stringify({
-                page,
-                limit,
-                yearStart: req.query.yearStart,
-                yearEnd: req.query.yearEnd,
-                budgetLow: req.query.budgetLow,
-                budgetHigh: req.query.budgetHigh,
-                revenueLow: req.query.revenueLow,
-                revenueHigh: req.query.revenueHigh,
-                runtimeLow: req.query.runtimeLow,
-                runtimeHigh: req.query.runtimeHigh,
-                genre: req.query.genre,
-                mpaRating: req.query.mpaRating,
-                title: req.query.title,
-            })
-        );
+        // optional: echo filters back so you can debug in browser / curl
+        res.set('X-Filters', JSON.stringify(filters));
+
 
         res.json({
             success: true,
@@ -188,95 +126,65 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
             data,
         });
     } catch (err) {
-        console.error('Server error in GET /api/movies/page:', err);
+        console.error('GET /api/movies/page error:', err);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-/* =========================================================================
+/**
  * GET /api/movies/page/simple
- * Simple pagination with NO filters (DB smoke test)
- *
- * /api/movies/page/simple?limit=5&page=1
- * =========================================================================
+ * really dumb pagination (no filters) just to show stuff loads
  */
-r.get('/page/simple', async (req: Request, res: Response): Promise<void> => {
-    res.set('X-Route', '/api/movies/page/simple');
+r.get(
+    '/page/simple',
+    async (req: Request, res: Response): Promise<void> => {
+        res.set('X-Route', '/api/movies/page/simple');
 
-    const page = num(req.query.page) ?? 1;
-    const limit = Math.min(100, num(req.query.limit) ?? 25);
-    const offset = (page - 1) * limit;
+        const page = num(req.query.page) ?? 1;
+        const limit = Math.min(100, num(req.query.limit) ?? 25);
+        const offset = (page - 1) * limit;
 
-    try {
-        const data = await listMoviesByOffset(limit, offset);
-        res.json({
-            success: true,
-            page,
-            limit,
-            offset,
-            data,
-        });
-    } catch (error) {
-        const message =
-            error instanceof Error ? error.message : 'Unknown error';
-        res.status(500).json({ success: false, message });
-    }
-});
+        try {
+            const data = await listMoviesByOffset(limit, offset);
 
-/* =========================================================================
- * GET /api/movies/random
- * Returns random movies (uses ORDER BY RANDOM() in Postgres)
- * =========================================================================
- */
-r.get('/random', async (_req: Request, res: Response): Promise<void> => {
-    try {
-        const movies = await getRandomMovies(10);
-        res.status(200).json({ success: true, data: movies });
-    } catch (error) {
-        const message =
-            error instanceof Error ? error.message : 'Unknown error';
-        res.status(500).json({ success: false, message });
-    }
-});
+            res.json({
+                success: true,
+                page,
+                limit,
+                offset,
+                data,
+            });
+        } catch (err) {
+            console.error('GET /api/movies/page/simple error:', err);
+            res
+                .status(500)
+                .json({ success: false, message: 'Server error' });
+        }
+    },
+);
 
-/* =========================================================================
- * POST /api/movies/insert
- * CSV-backed "insert" into your local dataset file
- * =========================================================================
- */
-r.post('/insert', insertMovie);
-
-/* =========================================================================
- * DELETE /api/movies/delete/:id
- * CSV-backed "delete" by title/id string (you built this in movieController)
- * =========================================================================
- */
-r.delete('/delete/:id', deleteMovie);
-
-/* =========================================================================
+/**
  * GET /api/movies/:id
- * Lookup by numeric movie_id in Postgres
- * =========================================================================
+ * Single movie lookup
  */
 r.get('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-    const id = Number.parseInt(req.params.id, 10);
-    if (Number.isNaN(id)) {
+    const idNum = Number.parseInt(req.params.id, 10);
+    if (Number.isNaN(idNum)) {
         res.status(400).json({ error: 'id must be a number' });
         return;
     }
 
     try {
-        const row = await getMovie(id);
+        const row = await getMovie(idNum);
         if (!row) {
             res.status(404).json({ error: 'Not found' });
             return;
         }
-        res.json({ success: true, data: row });
+        res.json(row);
     } catch (err) {
-        console.error('Error in GET /api/movies/:id:', err);
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('GET /api/movies/:id error:', err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
 export default r;
-
