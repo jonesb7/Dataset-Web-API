@@ -1,19 +1,16 @@
-/**
- * Open routes barrel exports
- *
- * Aggregates all publicly accessible routes that don't require authentication.
- * Provides clean organization for routes that are available to all clients.
- *
- * @see {@link ../../../docs/node-express-architecture.md#routing-patterns} for routing organization
- */
+// src/routes/open/index.ts
 
-// Health monitoring routes
-export * from './healthRoutes';
+// These files export **named** routers like `export const helloRoutes = Router()`
+export { helloRoutes } from './helloRoutes';
+export { healthRoutes } from './healthRoutes';
+export { parametersRoutes } from './parametersRoutes';
 
-// Hello World demonstration routes
-export * from './helloRoutes';
+// These files commonly export **default** routers like `export default r`
+export { default as docsRoutes } from './docsRoutes';
+export { default as moviesRoutes } from './movies.routes';
 
-// Parameters demonstration routes
-export * from './parametersRoutes';
-
-export * from './movies.routes';
+// If your docsRoutes or movies.routes actually export **named** values instead,
+// comment the two lines above and use the following instead:
+//
+// export { docsRoutes } from './docsRoutes';
+// export { moviesRoutes } from './movies.routes';

@@ -1,59 +1,70 @@
-/**
- * Main application routing configuration
- *
- * Configures all API routes with proper organization, middleware application,
- * and error handling for a complete routing system.
- *
- * @see {@link ../../docs/node-express-architecture.md#routing-architecture} for routing patterns
- */
+// src/routes/index.ts
+import { Router, Request, Response } from 'express';
 
-import { Router } from 'express';
-import { healthRoutes } from '@routes/open';
-import { helloRoutes } from '@routes/open';
-import { parametersRoutes } from '@routes/open';
-import docsRoutes from './open/docsRoutes';
-import { notFoundHandler } from '@middleware/errorHandler';
-import moviesRoutes from './open/movies.routes'; // adjust path as needed
+// pull in the per-feature routers from open/
+import {
+    healthRoutes,
+    helloRoutes,
+    parametersRoutes,
+    docsRoutes,
+    moviesRoutes,
+} from './open';
 
-// import { notFoundHandler } from '@middleware/errorHandler';
+// 404 handler
+import { notFoundHandler } from '../core/middleware/errorHandler';
 
 export const routes = Router();
 
-// Health check routes (no authentication required)
+/**
+ * Public, no-auth routes
+ * These are mounted under /api in app.ts
+ * So e.g. GET /api/health, /api/hello, etc.
+ */
 routes.use('/health', healthRoutes);
-
-// Hello World demonstration routes (no authentication required)
 routes.use('/hello', helloRoutes);
-
-// Parameters demonstration routes (no authentication required)
 routes.use('/parameters', parametersRoutes);
-
-routes.use('/api/movies', moviesRoutes);
-
-// Documentation routes (no authentication required)
+routes.use('/api/movies', moviesRoutes); // <--- yup, /api/movies becomes /api/api/movies if you also prefix in app.ts. See note below.
 routes.use('/docs', docsRoutes);
 
-// API version and documentation endpoint
-routes.get('/', (request, response) => {
-    response.json({
+/**
+ * API root: GET /api
+ * Returns metadata + useful links to help consumers explore.
+ */
+routes.get('/', (_req: Request, res: Response): void => {
+    res.json({
         success: true,
         message: 'TCSS-460 HelloWorld API',
         version: '1.0.0',
         timestamp: new Date().toISOString(),
         endpoints: {
+            // health
             health: '/health',
             healthDetailed: '/health/detailed',
+
+            // hello
             hello: '/hello',
+
+            // parameters demo
             parametersQuery: '/parameters/query?name=value',
             parametersPath: '/parameters/path/{name}',
             parametersBody: '/parameters/body',
             parametersHeaders: '/parameters/headers',
+
+            // movies
             movies: '/api/movies',
-            docs: '/docs'
+            moviesStatsYear: '/api/movies/stats?by=year',
+            moviesStatsGenre: '/api/movies/stats?by=genre',
+            moviesPageSimple: '/api/movies/page/simple?limit=5&page=1',
+            moviesPageAdvanced:
+                '/api/movies/page?yearStart=2010&yearEnd=2020&genre=Action&limit=5&page=1',
         },
-        documentation: '/api-docs'
+        docs: '/docs',
     });
 });
 
-// Handle 404 for unmatched routes
+/**
+ * 404 fallback for anything that didn't match above
+ */
 routes.use('*', notFoundHandler);
+
+export default routes;
