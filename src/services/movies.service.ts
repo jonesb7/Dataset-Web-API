@@ -1,16 +1,5 @@
 // src/services/movies.service.ts
 import { pool } from '../db/pool';
-
-type OptionalStr = string | undefined;
-
-export type ListArgs = {
-    page: number;
-    pageSize: number;
-    year?: OptionalStr;
-    title?: OptionalStr;
-    genre?: OptionalStr;
-};
-
 /**
  * Base projection to normalize the movie row shape for the API.
  * - movie (singular) table
@@ -19,35 +8,122 @@ export type ListArgs = {
  * - genres TEXT (comma separated) -> string[]
  */
 const BASE_SELECT = `
-  SELECT
-    movie_id AS id,
-    title,
-    original_title,
-    release_date,
-    runtime AS runtime_min,
-    string_to_array(NULLIF(genres, ''), ',') AS genres,
-    overview,
-    budget,
-    revenue,
-    mpa_rating,
-    country
-  FROM movie
+    SELECT
+        movie_id AS id,
+        title,
+        original_title,
+        release_date,
+        runtime,
+        string_to_array(NULLIF(genres, ''), '; ') AS genres,
+        overview,
+        mpa_rating,
+        collection,
+        budget,
+        revenue,
+        poster_url,
+        backdrop_url,
+        string_to_array(NULLIF(producers, ''), '; ') AS producrs,
+        string_to_array(NULLIF(directors, ''), '; ') AS directors,
+        string_to_array(NULLIF(studios, ''), '; ') AS studios,
+        string_to_array(NULLIF(studio_logos, ''), '; ') AS studio_logos,
+        string_to_array(NULLIF(studio_countries, ''), '; ') AS studio_countries,
+        -- create structured actor arrays
+        ARRAY[
+            json_build_object('name', actor1_name, 'character', actor1_character, 'profile', actor1_profile),
+        json_build_object('name', actor2_name, 'character', actor2_character, 'profile', actor2_profile),
+        json_build_object('name', actor3_name, 'character', actor3_character, 'profile', actor3_profile),
+        json_build_object('name', actor4_name, 'character', actor4_character, 'profile', actor4_profile),
+        json_build_object('name', actor5_name, 'character', actor5_character, 'profile', actor5_profile),
+        json_build_object('name', actor6_name, 'character', actor6_character, 'profile', actor6_profile),
+        json_build_object('name', actor7_name, 'character', actor7_character, 'profile', actor7_profile),
+        json_build_object('name', actor8_name, 'character', actor8_character, 'profile', actor8_profile),
+        json_build_object('name', actor9_name, 'character', actor9_character, 'profile', actor9_profile),
+        json_build_object('name', actor10_name, 'character', actor10_character, 'profile', actor10_profile)
+        ] AS actors
+    FROM movie_import_raw
 `;
 
 /**
  * List movies with optional filters and pagination.
  * Year matching is robust even if release_date is stored as ISO/timestamp/text.
  */
-export async function listMovies({ page, pageSize, year, title, genre }: ListArgs) {
+export type ListArgs = {
+    page: number;
+    pageSize: number;
+    yearStart?: number | undefined;
+    yearEnd?: number | undefined;
+    year?: string | undefined;
+    runtimeMin?: number | undefined;
+    runtimeMax?: number | undefined;
+    title?: string | undefined;
+    genre?: string | undefined;
+    mpaRating?: string | undefined;
+    studios?: string | undefined;
+    producers?: string | undefined;
+    directors?: string | undefined;
+    collection?: string | undefined;
+    posterUrl?: string | undefined;
+    backdropUrl?: string | undefined;
+    studioLogos?: string | undefined;
+    studioCountries?: string | undefined;
+    actorNames?: string[] | undefined;       // for partial match on any actor names (optional)
+    actorCharacters?: string[] | undefined;  // similarly for characters if needed
+};
+
+export async function listMovies({
+                                     page = 1,
+                                     pageSize = 25,
+                                     yearStart,
+                                     yearEnd,
+                                     year,
+                                     runtimeMin,
+                                     runtimeMax,
+                                     title,
+                                     genre,
+                                     mpaRating,
+                                     studios,
+                                     producers,
+                                     directors,
+                                     collection,
+                                     posterUrl,
+                                     backdropUrl,
+                                     studioLogos,
+                                     studioCountries,
+                                     actorNames
+                                 }: ListArgs) {
+    const limit = pageSize;
     const offset = (page - 1) * pageSize;
-
     const where: string[] = [];
-    const params: unknown[] = [];
+    const params: any[] = [];
 
-    // YEAR filter (robust: works for DATE, TIMESTAMP, or text/ISO strings)
+    if (yearStart !== undefined && yearEnd !== undefined) {
+        params.push(yearStart, yearEnd);
+        where.push(`LEFT(release_date::text, 4)::int BETWEEN $${params.length - 1} AND $${params.length}`);
+    } else if (yearStart !== undefined) {
+        params.push(yearStart);
+        where.push(`LEFT(release_date::text, 4)::int >= $${params.length}`);
+    } else if (yearEnd !== undefined) {
+        params.push(yearEnd);
+        where.push(`LEFT(release_date::text, 4)::int <= $${params.length}`);
+    }
+    // Filter by runtime range if both min and max are provided
+    if (runtimeMin !== undefined && runtimeMax !== undefined) {
+        params.push(runtimeMin, runtimeMax);
+        // runtime assumed to be numeric, no regex check needed
+        where.push(`runtime BETWEEN $${params.length - 1} AND $${params.length}`);
+    } else if (runtimeMin !== undefined) {
+        params.push(runtimeMin);
+        where.push(`runtime >= $${params.length}`);
+    } else if (runtimeMax !== undefined) {
+        params.push(runtimeMax);
+        where.push(`runtime <= $${params.length}`);
+    }
+
+
+
     if (year) {
-        params.push(parseInt(year, 10));
-        // Compare the first 4 chars of release_date::text to the year
+        const y = parseInt(year, 10);
+        params.push(y);
         where.push(`LEFT(release_date::text, 4)::int = $${params.length}`);
     }
 
@@ -57,11 +133,76 @@ export async function listMovies({ page, pageSize, year, title, genre }: ListArg
     }
 
     if (genre) {
-        // genres is TEXT in DB; in SELECT it's converted to array.
-        // For filtering, re-use the expression here.
         params.push(genre);
         where.push(`$${params.length} = ANY(string_to_array(NULLIF(genres, ''), ','))`);
     }
+
+    if (mpaRating) {
+        params.push(mpaRating);
+        where.push(`mpa_rating = $${params.length}`);
+    }
+
+    // For all semicolon-separated string fields we do a case-insensitive LIKE match of the whole text
+    if (studios) {
+        params.push(`%${studios.toLowerCase()}%`);
+        where.push(`LOWER(studios) LIKE $${params.length}`);
+    }
+
+    if (producers) {
+        params.push(`%${producers.toLowerCase()}%`);
+        where.push(`LOWER(producers) LIKE $${params.length}`);
+    }
+
+    if (directors) {
+        params.push(`%${directors.toLowerCase()}%`);
+        where.push(`LOWER(directors) LIKE $${params.length}`);
+    }
+
+    if (collection) {
+        params.push(`%${collection.toLowerCase()}%`);
+        where.push(`LOWER(collection) LIKE $${params.length}`);
+    }
+
+    if (posterUrl) {
+        params.push(`%${posterUrl.toLowerCase()}%`);
+        where.push(`LOWER(poster_url) LIKE $${params.length}`);
+    }
+
+    if (backdropUrl) {
+        params.push(`%${backdropUrl.toLowerCase()}%`);
+        where.push(`LOWER(backdrop_url) LIKE $${params.length}`);
+    }
+
+    if (studioLogos) {
+        params.push(`%${studioLogos.toLowerCase()}%`);
+        where.push(`LOWER(studio_logos) LIKE $${params.length}`);
+    }
+
+    if (studioCountries) {
+        params.push(`%${studioCountries.toLowerCase()}%`);
+        where.push(`LOWER(studio_countries) LIKE $${params.length}`);
+    }
+
+    // Optional partial filtering on actor names (matches any of the actors)
+    if (actorNames && actorNames.length > 0) {
+        actorNames.forEach((name) => {
+            params.push(`%${name.toLowerCase()}%`);
+            where.push(`(
+        LOWER(actor1_name) LIKE $${params.length}
+        OR LOWER(actor2_name) LIKE $${params.length}
+        OR LOWER(actor3_name) LIKE $${params.length}
+        OR LOWER(actor4_name) LIKE $${params.length}
+        OR LOWER(actor5_name) LIKE $${params.length}
+        OR LOWER(actor6_name) LIKE $${params.length}
+        OR LOWER(actor7_name) LIKE $${params.length}
+        OR LOWER(actor8_name) LIKE $${params.length}
+        OR LOWER(actor9_name) LIKE $${params.length}
+        OR LOWER(actor10_name) LIKE $${params.length}
+      )`);
+        });
+    }
+
+    // Similarly, you could add filtering on actorCharacters if needed
 
     const sql = `
     ${BASE_SELECT}
@@ -70,11 +211,14 @@ export async function listMovies({ page, pageSize, year, title, genre }: ListArg
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
 
-    params.push(pageSize, offset);
+    params.push(limit, offset);
 
     const { rows } = await pool.query(sql, params);
     return rows;
 }
+
+
+
 
 export async function getMovie(id: number) {
     const sql = `

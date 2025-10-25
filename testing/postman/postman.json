@@ -12,6 +12,115 @@
   ],
   "item": [
     {
+      "name": "Movies Page – Filter by Year Range and Genre",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies/page?page=1&limit=5&yearStart=2010&yearEnd=2020&genre=Action",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies", "page"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "5" },
+            { "key": "yearStart", "value": "2010" },
+            { "key": "yearEnd", "value": "2020" },
+            { "key": "genre", "value": "Action" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.be.true;",
+              "pm.expect(json.data).to.be.an('array');",
+              "if (json.data.length > 0) {",
+              "  const y = new Date(json.data[0].release_date).getFullYear();",
+              "  pm.expect(y).to.be.within(2010, 2020);",
+              "  pm.expect(json.data[0].genres).to.include(\"Action\");",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Movies Page – Filter by Budget and Revenue",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies/page?budgetLow=1000000&budgetHigh=50000000&revenueLow=5000000&revenueHigh=300000000",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies", "page"],
+          "query": [
+            { "key": "budgetLow", "value": "1000000" },
+            { "key": "budgetHigh", "value": "50000000" },
+            { "key": "revenueLow", "value": "5000000" },
+            { "key": "revenueHigh", "value": "300000000" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.be.true;",
+              "pm.expect(json.data).to.be.an('array');",
+              "json.data.forEach(movie => {",
+              "  if (typeof movie.budget === 'number') pm.expect(movie.budget).to.be.within(1000000, 50000000);",
+              "  if (typeof movie.budget === 'number') pm.expect(movie.revenue).to.be.within(5000000, 300000000);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Movies Page – Filter by Runtime and MPA Rating",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies/page?runtimeLow=80&runtimeHigh=120&mpaRating=PG-13",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies", "page"],
+          "query": [
+            { "key": "runtimeLow", "value": "80" },
+            { "key": "runtimeHigh", "value": "120" },
+            { "key": "mpaRating", "value": "PG-13" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.be.true;",
+              "json.data.forEach(m => {",
+              "  if (m.runtime_min !== null) pm.expect(m.runtime_min).to.be.within(80, 120);",
+              "  pm.expect(m.mpa_rating).to.eql(\"PG-13\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+
       "name": "Get Paged Movies (page + limit)",
       "request": {
         "method": "GET",

@@ -8,11 +8,11 @@
  */
 
 import { Router } from 'express';
-import { healthRoutes } from './open/healthRoutes';
-import { helloRoutes } from './open/helloRoutes';
-import { parametersRoutes } from './open/parametersRoutes';
+import { healthRoutes } from '@routes/open';
+import { helloRoutes } from '@routes/open';
+import { parametersRoutes } from '@routes/open';
 import docsRoutes from './open/docsRoutes';
-import { notFoundHandler } from '../core/middleware/errorHandler';
+import { notFoundHandler } from '@middleware/errorHandler';
 import moviesRoutes from './open/movies.routes'; // adjust path as needed
 
 // import { notFoundHandler } from '@middleware/errorHandler';
