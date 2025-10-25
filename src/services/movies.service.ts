@@ -13,51 +13,34 @@ const BASE_SELECT = `
         title,
         original_title,
         release_date,
-        runtime AS runtime_min,
-        genres,
+        runtime,
+        string_to_array(NULLIF(genres, ''), '; ') AS genres,
         overview,
-        budget,
-        revenue,
-        studios,
-        producers,
-        directors,
         mpa_rating,
         collection,
+        budget,
+        revenue,
         poster_url,
         backdrop_url,
-        studio_logos,
-        studio_countries,
-        actor1_name,
-        actor1_character,
-        actor1_profile,
-        actor2_name,
-        actor2_character,
-        actor2_profile,
-        actor3_name,
-        actor3_character,
-        actor3_profile,
-        actor4_name,
-        actor4_character,
-        actor4_profile,
-        actor5_name,
-        actor5_character,
-        actor5_profile,
-        actor6_name,
-        actor6_character,
-        actor6_profile,
-        actor7_name,
-        actor7_character,
-        actor7_profile,
-        actor8_name,
-        actor8_character,
-        actor8_profile,
-        actor9_name,
-        actor9_character,
-        actor9_profile,
-        actor10_name,
-        actor10_character,
-        actor10_profile
-    FROM movie
+        string_to_array(NULLIF(producers, ''), '; ') AS producrs,
+        string_to_array(NULLIF(directors, ''), '; ') AS directors,
+        string_to_array(NULLIF(studios, ''), '; ') AS studios,
+        string_to_array(NULLIF(studio_logos, ''), '; ') AS studio_logos,
+        string_to_array(NULLIF(studio_countries, ''), '; ') AS studio_countries,
+        -- create structured actor arrays
+        ARRAY[
+            json_build_object('name', actor1_name, 'character', actor1_character, 'profile', actor1_profile),
+        json_build_object('name', actor2_name, 'character', actor2_character, 'profile', actor2_profile),
+        json_build_object('name', actor3_name, 'character', actor3_character, 'profile', actor3_profile),
+        json_build_object('name', actor4_name, 'character', actor4_character, 'profile', actor4_profile),
+        json_build_object('name', actor5_name, 'character', actor5_character, 'profile', actor5_profile),
+        json_build_object('name', actor6_name, 'character', actor6_character, 'profile', actor6_profile),
+        json_build_object('name', actor7_name, 'character', actor7_character, 'profile', actor7_profile),
+        json_build_object('name', actor8_name, 'character', actor8_character, 'profile', actor8_profile),
+        json_build_object('name', actor9_name, 'character', actor9_character, 'profile', actor9_profile),
+        json_build_object('name', actor10_name, 'character', actor10_character, 'profile', actor10_profile)
+        ] AS actors
+    FROM movie_import_raw
 `;
 
 /**
@@ -70,6 +53,8 @@ export type ListArgs = {
     yearStart?: number | undefined;
     yearEnd?: number | undefined;
     year?: string | undefined;
+    runtimeMin?: number | undefined;
+    runtimeMax?: number | undefined;
     title?: string | undefined;
     genre?: string | undefined;
     mpaRating?: string | undefined;
@@ -91,6 +76,8 @@ export async function listMovies({
                                      yearStart,
                                      yearEnd,
                                      year,
+                                     runtimeMin,
+                                     runtimeMax,
                                      title,
                                      genre,
                                      mpaRating,
@@ -119,6 +106,20 @@ export async function listMovies({
         params.push(yearEnd);
         where.push(`LEFT(release_date::text, 4)::int <= $${params.length}`);
     }
+    // Filter by runtime range if both min and max are provided
+    if (runtimeMin !== undefined && runtimeMax !== undefined) {
+        params.push(runtimeMin, runtimeMax);
+        // runtime assumed to be numeric, no regex check needed
+        where.push(`runtime BETWEEN $${params.length - 1} AND $${params.length}`);
+    } else if (runtimeMin !== undefined) {
+        params.push(runtimeMin);
+        where.push(`runtime >= $${params.length}`);
+    } else if (runtimeMax !== undefined) {
+        params.push(runtimeMax);
+        where.push(`runtime <= $${params.length}`);
+    }
+
+
 
     if (year) {
         const y = parseInt(year, 10);

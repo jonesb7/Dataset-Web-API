@@ -1,24 +1,29 @@
 import { Router, Request, Response } from 'express';
-import { getRandomMovies, listMovies, getMovie, stats, ListArgs } from '../../services/movies.service';
+import {
+    getRandomMovies,
+    listMovies,
+    getMovie,
+    stats,
+    ListArgs
+} from '../../services/movies.service';
 import { insertMovie, deleteMovie } from '../../controllers/movieController';
+
 const r: Router = Router();
 
 // GET /api/movies
 r.get('/', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10));
-    const pageSize = Math.min(
-        100,
-        Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10))
-    );
+    const pageSize = Math.min(100, Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10)));
 
     const { year, title, genre } = req.query as {
-        year?: string; title?: string; genre?: string;
+        year?: string;
+        title?: string;
+        genre?: string;
     };
 
-    // Build args without undefined keys (works with exactOptionalPropertyTypes)
     const args: Pick<ListArgs, 'page' | 'pageSize'> &
         Partial<Pick<ListArgs, 'year' | 'title' | 'genre'>> = { page, pageSize };
-    if (year)  args.year = year;
+    if (year) args.year = year;
     if (title) args.title = title;
     if (genre) args.genre = genre;
 
@@ -32,13 +37,19 @@ r.get('/stats', async (req: Request, res: Response): Promise<void> => {
     res.json(await stats(by));
 });
 
-// GET /api/movies/page - fully filtered page with pagination and multiple filters
+// GET /api/movies/page (multi-filter + pagination)
 r.get('/page', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
     const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit ?? '25'), 10)));
 
+    // Numeric filters
     const yearStart = req.query.yearStart ? parseInt(String(req.query.yearStart), 10) : undefined;
     const yearEnd = req.query.yearEnd ? parseInt(String(req.query.yearEnd), 10) : undefined;
+    const runtimeMin = req.query.runtimeMin ? parseInt(String(req.query.runtimeMin), 10) : undefined;
+    const runtimeMax = req.query.runtimeMax ? parseInt(String(req.query.runtimeMax), 10) : undefined;
+
+    // Other filters
+    const year = req.query.year as string | undefined;
     const genre = req.query.genre as string | undefined;
     const mpaRating = req.query.mpaRating as string | undefined;
     const title = req.query.title as string | undefined;
@@ -51,9 +62,12 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
     const studioLogos = req.query.studioLogos as string | undefined;
     const studioCountries = req.query.studioCountries as string | undefined;
 
-    // For actors, accept comma-separated list and split to array
+    // Actors as comma-separated list
     const actorNames = req.query.actorNames
-        ? (String(req.query.actorNames).split(',').map(s => s.trim()).filter(Boolean))
+        ? String(req.query.actorNames)
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
         : undefined;
 
     try {
@@ -62,6 +76,9 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
             pageSize: limit,
             yearStart,
             yearEnd,
+            runtimeMin,
+            runtimeMax,
+            year,
             genre,
             mpaRating,
             title,
@@ -89,10 +106,7 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-
-
-
-
+// GET /api/movies/random
 r.get('/random', async (_req: Request, res: Response): Promise<void> => {
     try {
         const movies = await getRandomMovies(10);
@@ -102,13 +116,14 @@ r.get('/random', async (_req: Request, res: Response): Promise<void> => {
         res.status(500).json({ success: false, message });
     }
 });
-// POST /api/movies/insert - NEW!
+
+// POST /api/movies/insert
 r.post('/insert', insertMovie);
 
-// DELETE /api/movies/delete/:id - NEW!
+// DELETE /api/movies/delete/:id
 r.delete('/delete/:id', deleteMovie);
+
 // GET /api/movies/:id
-// 👇 Tell TS that params contain { id: string } so req.params.id is not undefined
 r.get('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
     const idStr = req.params.id;
     const id = Number.parseInt(idStr, 10);
@@ -122,6 +137,7 @@ r.get('/:id', async (req: Request<{ id: string }>, res: Response): Promise<void>
         res.status(404).json({ error: 'Not found' });
         return;
     }
+
     res.json(row);
 });
 
