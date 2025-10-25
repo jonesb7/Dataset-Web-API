@@ -60,7 +60,6 @@ const BASE_SELECT = `
     FROM movie
 `;
 
-
 /**
  * List movies with optional filters and pagination.
  * Year matching is robust even if release_date is stored as ISO/timestamp/text.
