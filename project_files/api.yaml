@@ -319,107 +319,143 @@ paths:
       summary: Paginated list of movies with advanced filters
       description: >
         Returns a list of movies using a `page` number and `limit`.
-        Supports advanced filtering by release year range, budget, revenue, runtime, genre, and MPA rating.
-      parameters:
-        - in: query
-          name: page
-          required: false
-          schema:
-            type: integer
-            default: 1
-            minimum: 1
-          description: Page number (starting from 1)
-        - in: query
-          name: limit
-          required: false
-          schema:
-            type: integer
-            default: 25
-            minimum: 1
-            maximum: 100
-          description: Number of movies per page
-        - in: query
-          name: yearStart
-          schema:
-            type: integer
-            minimum: 1900
-            maximum: 2100
-          description: Minimum release year
-        - in: query
-          name: yearEnd
-          schema:
-            type: integer
-            minimum: 1900
-            maximum: 2100
-          description: Maximum release year
-        - in: query
-          name: budgetLow
-          schema:
-            type: integer
-            minimum: 0
-          description: Minimum budget
-        - in: query
-          name: budgetHigh
-          schema:
-            type: integer
-            minimum: 0
-          description: Maximum budget
-        - in: query
-          name: revenueLow
-          schema:
-            type: integer
-            minimum: 0
-          description: Minimum revenue
-        - in: query
-          name: revenueHigh
-          schema:
-            type: integer
-            minimum: 0
-          description: Maximum revenue
-        - in: query
-          name: runtimeLow
-          schema:
-            type: integer
-            minimum: 0
-          description: Minimum runtime (in minutes)
-        - in: query
-          name: runtimeHigh
-          schema:
-            type: integer
-            minimum: 0
-          description: Maximum runtime (in minutes)
-        - in: query
-          name: genre
-          schema:
+        Supports detailed movie browsing through the movies/paged route, allowing filtering by several criteria to refine search results. Movies can be narrowed down by title, specific year or range of years, runtime length, genre, or MPA rating. Filters also include production details such as studios, producers, directors, and collections, as well as visual elements like poster or backdrop image links. Additionally, filtering can be applied to studio logos, studio countries, and actor names appearing in the cast. All of these options can be combined to locate specific kinds of movies, such as action films from a certain year featuring a particular actor, while also controlling how many results appear per page and which page of results to view for a smoother browsing experience.
+    parameters:
+      - in: query
+        name: page
+        required: false
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        description: Page number (starting from 1)
+      - in: query
+        name: limit
+        required: false
+        schema:
+          type: integer
+          default: 25
+          minimum: 1
+          maximum: 100
+        description: Number of movies per page
+      - in: query
+        name: yearStart
+        schema:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+        description: Minimum release year
+      - in: query
+        name: yearEnd
+        schema:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+        description: Maximum release year
+      - in: query
+        name: year
+        schema:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+        description: Filter by specific release year
+      - in: query
+        name: runtimeMin
+        schema:
+          type: integer
+          minimum: 0
+        description: Minimum runtime in minutes
+      - in: query
+        name: runtimeMax
+        schema:
+          type: integer
+          minimum: 0
+        description: Maximum runtime in minutes
+      - in: query
+        name: title
+        schema:
+          type: string
+        description: Filter by partial movie title match
+      - in: query
+        name: genre
+        schema:
+          type: string
+        description: Filter by genre (exact match)
+      - in: query
+        name: mpaRating
+        schema:
+          type: string
+        description: Filter by MPA rating (e.g., PG-13, R)
+      - in: query
+        name: studios
+        schema:
+          type: string
+        description: Filter by studio name (case-insensitive)
+      - in: query
+        name: producers
+        schema:
+          type: string
+        description: Filter by producer name (case-insensitive)
+      - in: query
+        name: directors
+        schema:
+          type: string
+        description: Filter by director name (case-insensitive)
+      - in: query
+        name: collection
+        schema:
+          type: string
+        description: Filter by movie collection name
+      - in: query
+        name: posterUrl
+        schema:
+          type: string
+        description: Filter by poster image URL or partial match
+      - in: query
+        name: backdropUrl
+        schema:
+          type: string
+        description: Filter by backdrop image URL or partial match
+      - in: query
+        name: studioLogos
+        schema:
+          type: string
+        description: Filter by studio logo path or reference
+      - in: query
+        name: studioCountries
+        schema:
+          type: string
+        description: Filter by studio country name
+      - in: query
+        name: actorNames
+        schema:
+          type: array
+          items:
             type: string
-          description: Filter by genre (exact match)
-        - in: query
-          name: mpaRating
-          schema:
-            type: string
-          description: Filter by MPA rating (e.g., PG-13, R)
-      responses:
-        '200':
-          description: Paginated movie results with applied filters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success: { type: boolean, example: true }
-                  page: { type: integer, example: 1 }
-                  limit: { type: integer, example: 10 }
-                  offset: { type: integer, example: 0 }
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Movie'
-        '400':
-          description: Invalid query parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        description: Filter by actor names (matches any in cast)
+    responses:
+      '200':
+        description: Paginated movie results with applied filters
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                page: { type: integer, example: 1 }
+                limit: { type: integer, example: 25 }
+                totalResults: { type: integer, example: 2470 }
+                offset: { type: integer, example: 0 }
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Movie'
+      '400':
+        description: Invalid query parameters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
 
   /movies/stats:
     get:
