@@ -5,33 +5,45 @@
  * and consistent styling for documentation hosting.
  */
 
-import { marked } from 'marked';
 import hljs from 'highlight.js';
 import fs from 'fs';
 import path from 'path';
 
-/**
- * Configure marked with syntax highlighting using the modern renderer API
- */
-marked.use({
-    breaks: true,
-    gfm: true,
-    renderer: {
-        code(token: { text: string; lang?: string }): string {
-            const code = token.text;
-            const language = token.lang;
+// Type for marked module (loaded dynamically)
+type MarkedType = typeof import('marked');
+let markedInstance: MarkedType['marked'] | null = null;
 
-            if (language && hljs.getLanguage(language)) {
-                try {
-                    return `<pre><code class="hljs language-${language}">${hljs.highlight(code, { language }).value}</code></pre>`;
-                } catch (err) {
-                    // Fall back to auto-detection
+/**
+ * Lazy load marked ES module
+ */
+async function getMarked(): Promise<MarkedType['marked']> {
+    if (!markedInstance) {
+        const markedModule = await import('marked');
+        markedInstance = markedModule.marked;
+
+        // Configure marked with syntax highlighting using the modern renderer API
+        markedInstance.use({
+            breaks: true,
+            gfm: true,
+            renderer: {
+                code(token: { text: string; lang?: string }): string {
+                    const code = token.text;
+                    const language = token.lang;
+
+                    if (language && hljs.getLanguage(language)) {
+                        try {
+                            return `<pre><code class="hljs language-${language}">${hljs.highlight(code, { language }).value}</code></pre>`;
+                        } catch {
+                            // Fall back to auto-detection
+                        }
+                    }
+                    return `<pre><code class="hljs">${hljs.highlightAuto(code).value}</code></pre>`;
                 }
             }
-            return `<pre><code class="hljs">${hljs.highlightAuto(code).value}</code></pre>`;
-        }
+        });
     }
-});
+    return markedInstance;
+}
 
 /**
  * Convert markdown content to HTML with styling
@@ -40,8 +52,9 @@ marked.use({
  * @param title Optional title for the HTML page
  * @returns Complete HTML page with CSS styling
  */
-export const markdownToHtml = (markdownContent: string, title: string = 'Documentation'): string => {
-    const htmlContent = marked(markdownContent);
+export const markdownToHtml = async (markdownContent: string, title: string = 'Documentation'): Promise<string> => {
+    const marked = await getMarked();
+    const htmlContent = await marked(markdownContent);
 
     return `
 <!DOCTYPE html>
@@ -255,7 +268,7 @@ export const markdownToHtml = (markdownContent: string, title: string = 'Documen
  * @param filePath Path to markdown file
  * @returns HTML content or null if file not found
  */
-export const readMarkdownFile = (filePath: string): string | null => {
+export const readMarkdownFile = async (filePath: string): Promise<string | null> => {
     try {
         if (!fs.existsSync(filePath)) {
             return null;
@@ -265,7 +278,7 @@ export const readMarkdownFile = (filePath: string): string | null => {
         const filename = path.basename(filePath, '.md');
         const title = filename.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-        return markdownToHtml(markdownContent, title);
+        return await markdownToHtml(markdownContent, title);
     } catch (error) {
         console.error('Error reading markdown file:', error);
         return null;
@@ -308,14 +321,14 @@ export const getMarkdownFiles = (dirPath: string): Array<{name: string, path: st
  * @param docsPath Path to docs directory
  * @returns HTML index page
  */
-export const generateDocsIndex = (docsPath: string): string => {
+export const generateDocsIndex = async (docsPath: string): Promise<string> => {
     // Check if README.md exists and use it as the main content
     const readmePath = path.join(docsPath, 'README.md');
 
     if (fs.existsSync(readmePath)) {
         // Use README.md as the main landing page content
         const readmeContent = fs.readFileSync(readmePath, 'utf8');
-        return markdownToHtml(readmeContent, 'TCSS-460 HelloWorld API Documentation');
+        return await markdownToHtml(readmeContent, 'TCSS-460 HelloWorld API Documentation');
     }
 
     // Fallback to generated index if README.md doesn't exist
@@ -376,5 +389,5 @@ npm run test:postman
 For questions about this educational API, please contact the TCSS-460 course staff.
 `;
 
-    return markdownToHtml(indexContent, 'TCSS-460 API Documentation');
+    return await markdownToHtml(indexContent, 'TCSS-460 API Documentation');
 };
