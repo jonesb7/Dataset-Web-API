@@ -8,12 +8,15 @@
  */
 
 import { Router } from 'express';
-import { healthRoutes } from './open/healthRoutes';
-import { helloRoutes } from './open/helloRoutes';
-import { parametersRoutes } from './open/parametersRoutes';
+import { healthRoutes } from '@routes/open';
+import { helloRoutes } from '@routes/open';
+import { parametersRoutes } from '@routes/open';
 import docsRoutes from './open/docsRoutes';
-import { notFoundHandler } from '../core/middleware/errorHandler';
+import { notFoundHandler } from '@middleware/errorHandler';
 import moviesRoutes from './open/movies.routes'; // adjust path as needed
+
+//Import protected route for routes that require API key authorization
+import protectedMoviesRoutes from './protected/movies.routes';
 
 // import { notFoundHandler } from '@middleware/errorHandler';
 
@@ -29,6 +32,9 @@ routes.use('/hello', helloRoutes);
 routes.use('/parameters', parametersRoutes);
 
 routes.use('/api/movies', moviesRoutes);
+
+//Added this mount
+routes.use('/protected', protectedMoviesRoutes);
 
 // Documentation routes (no authentication required)
 routes.use('/docs', docsRoutes);
@@ -49,7 +55,11 @@ routes.get('/', (request, response) => {
             parametersBody: '/parameters/body',
             parametersHeaders: '/parameters/headers',
             movies: '/api/movies',
-            docs: '/docs'
+            docs: '/docs',
+            protected: {
+                createMovie: 'POST /protected/movies',
+                deleteMovie: 'DELETE /protected/movies/:title'
+            }
         },
         documentation: '/api-docs'
     });

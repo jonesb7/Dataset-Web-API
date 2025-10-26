@@ -22,23 +22,21 @@ const r: Router = Router();
 // GET /api/movies
 r.get('/', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10));
-    const pageSize = Math.min(
-        100,
-        Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10))
-    );
+    const pageSize = Math.min(100, Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10)));
 
     const { year, title, genre } = req.query as {
-        year?: string; title?: string; genre?: string;
+        year?: string;
+        title?: string;
+        genre?: string;
     };
 
-    // Build args without undefined keys (works with exactOptionalPropertyTypes)
     const args: Pick<ListArgs, 'page' | 'pageSize'> &
         Partial<Pick<ListArgs, 'year' | 'title' | 'genre'>> = { page, pageSize };
-    if (year)  args.year = year;
+    if (year) args.year = year;
     if (title) args.title = title;
     if (genre) args.genre = genre;
 
-    const result = await listMovies(args);
+    const result = await listMovies(<ListArgs>args);
     res.json(result);
 });
 
@@ -63,19 +61,78 @@ r.get('/stats',
     }
 );
 
-// GET /api/movies/page?limit=10&offset=50
+// GET /api/movies/page (multi-filter + pagination)
 r.get('/page', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
     const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit ?? '25'), 10)));
-    const offset = (page - 1) * limit;
+
+    // Numeric filters
+    const yearStart = req.query.yearStart ? parseInt(String(req.query.yearStart), 10) : undefined;
+    const yearEnd = req.query.yearEnd ? parseInt(String(req.query.yearEnd), 10) : undefined;
+    const runtimeMin = req.query.runtimeMin ? parseInt(String(req.query.runtimeMin), 10) : undefined;
+    const runtimeMax = req.query.runtimeMax ? parseInt(String(req.query.runtimeMax), 10) : undefined;
+
+    // Budget and revenue filters
+    const budgetMin = req.query.budgetMin ? parseInt(String(req.query.budgetMin), 10) : undefined;
+    const budgetMax = req.query.budgetMax ? parseInt(String(req.query.budgetMax), 10) : undefined;
+    const revenueMin = req.query.revenueMin ? parseInt(String(req.query.revenueMin), 10) : undefined;
+    const revenueMax = req.query.revenueMax ? parseInt(String(req.query.revenueMax), 10) : undefined;
+
+    // Other filters
+    const year = req.query.year as string | undefined;
+    const genre = req.query.genre as string | undefined;
+    const mpaRating = req.query.mpaRating as string | undefined;
+    const title = req.query.title as string | undefined;
+    const studios = req.query.studios as string | undefined;
+    const producers = req.query.producers as string | undefined;
+    const directors = req.query.directors as string | undefined;
+    const collection = req.query.collection as string | undefined;
+    const posterUrl = req.query.posterUrl as string | undefined;
+    const backdropUrl = req.query.backdropUrl as string | undefined;
+    const studioLogos = req.query.studioLogos as string | undefined;
+    const studioCountries = req.query.studioCountries as string | undefined;
+
+    // Actors as comma-separated list
+    const actorNames = req.query.actorNames
+        ? String(req.query.actorNames)
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+        : undefined;
 
     try {
-        const data = await listMoviesByOffset(limit, offset);
+        const data = await listMovies(<ListArgs>{
+            page,
+            pageSize: limit,
+            yearStart,
+            yearEnd,
+            runtimeMin,
+            runtimeMax,
+            budgetMin,
+            budgetMax,
+            revenueMin,
+            revenueMax,
+            year,
+            genre,
+            mpaRating,
+            title,
+            studios,
+            producers,
+            directors,
+            collection,
+            posterUrl,
+            backdropUrl,
+            studioLogos,
+            studioCountries,
+            actorNames
+        });
+
         res.json({
             success: true,
             page,
             limit,
             offset,
+            offset: (page - 1) * limit,
             data
         });
     } catch (error) {
@@ -84,8 +141,7 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-
-
+// GET /api/movies/random
 r.get('/random', async (_req: Request, res: Response): Promise<void> => {
     try {
         const movies = await getRandomMovies(10);
