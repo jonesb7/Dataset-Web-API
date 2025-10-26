@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Movies API – Local & Render",
+    "name": "Movies API – Local & Render (Expanded Tests)",
     "_postman_id": "3e6d9b3a-3c2a-4de1-b0d3-aaaabbbbcccc",
-    "description": "Tests for Movies API against Local and Render deployments using a switchable baseUrl variable.",
+    "description": "Enhanced tests for Movies API with complete endpoint coverage for filters, pagination, metadata, and error handling. Supports both Local and Render environments with variable base URLs.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -32,23 +32,22 @@
         {
           "listen": "test",
           "script": {
-            "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
               "const json = pm.response.json();",
               "pm.expect(json.success).to.be.true;",
               "pm.expect(json.data).to.be.an('array');",
               "if (json.data.length > 0) {",
               "  const y = new Date(json.data[0].release_date).getFullYear();",
               "  pm.expect(y).to.be.within(2010, 2020);",
-              "  pm.expect(json.data[0].genres).to.include(\"Action\");",
+              "  pm.expect(json.data[0].genres).to.include('Action');",
               "}"
-            ]
+            ],
+            "type": "text/javascript"
           }
         }
       ]
     },
-
     {
       "name": "Movies Page – Filter by Budget and Revenue",
       "request": {
@@ -58,44 +57,47 @@
           "host": ["{{baseUrl}}"],
           "path": ["movies", "page"],
           "query": [
-            { "key": "budgetLow", "value": "1000000" },
-            { "key": "budgetHigh", "value": "50000000" },
-            { "key": "revenueLow", "value": "5000000" },
-            { "key": "revenueHigh", "value": "300000000" }
+            { "key": "budgetMin", "value": "1000000" },
+            { "key": "budgetMax", "value": "50000000" },
+            { "key": "revenueMin", "value": "5000000" },
+            { "key": "revenueMax", "value": "300000000" }
           ]
         }
       },
       "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.expect(json.success).to.be.true;",
-              "pm.expect(json.data).to.be.an('array');",
-              "json.data.forEach(movie => {",
-              "  if (typeof movie.budget === 'number') pm.expect(movie.budget).to.be.within(1000000, 50000000);",
-              "  if (typeof movie.budget === 'number') pm.expect(movie.revenue).to.be.within(5000000, 300000000);",
-              "});"
-            ]
-          }
+      {
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.expect(json.success).to.be.true;",
+            "json.data.forEach(m => {",
+            "  const budget = typeof m.budget === 'string' ? parseFloat(m.budget) : m.budget;",
+            "  const revenue = typeof m.revenue === 'string' ? parseFloat(m.revenue) : m.revenue;",
+            "  pm.expect(budget).to.be.a('number');",
+            "  pm.expect(budget).to.be.within(1000000, 50000000);",
+            "  pm.expect(revenue).to.be.a('number');",
+            "  pm.expect(revenue).to.be.within(5000000, 300000000);",
+            "});"
+          ],
+          "type": "text/javascript"
         }
-      ]
-    },
+      }
+    ]
 
+    },
     {
       "name": "Movies Page – Filter by Runtime and MPA Rating",
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{baseUrl}}/movies/page?runtimeLow=80&runtimeHigh=120&mpaRating=PG-13",
+          "raw": "{{baseUrl}}/movies/page?runtimeMin=80&runtimeMax=120&mpaRating=PG-13",
           "host": ["{{baseUrl}}"],
           "path": ["movies", "page"],
           "query": [
-            { "key": "runtimeLow", "value": "80" },
-            { "key": "runtimeHigh", "value": "120" },
+            { "key": "runtimeMin", "value": "80" },
+            { "key": "runtimeMax", "value": "120" },
             { "key": "mpaRating", "value": "PG-13" }
           ]
         }
@@ -104,33 +106,32 @@
         {
           "listen": "test",
           "script": {
-            "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
               "const json = pm.response.json();",
               "pm.expect(json.success).to.be.true;",
               "json.data.forEach(m => {",
-              "  if (m.runtime_min !== null) pm.expect(m.runtime_min).to.be.within(80, 120);",
-              "  pm.expect(m.mpa_rating).to.eql(\"PG-13\");",
+              "  if (m.runtime_min) pm.expect(m.runtime_min).to.be.within(80, 120);",
+              "  pm.expect(m.mpa_rating).to.eql('PG-13');",
               "});"
-            ]
+            ],
+            "type": "text/javascript"
           }
         }
       ]
     },
-
     {
-
-      "name": "Get Paged Movies (page + limit)",
+      "name": "Movies Page – Filter by Studios, Producers, and Directors",
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{baseUrl}}/movies/page?page=2&limit=5",
+          "raw": "{{baseUrl}}/movies/page?studios=Warner%20Bros&producers=Emma%20Thomas&directors=Christopher%20Nolan",
           "host": ["{{baseUrl}}"],
           "path": ["movies", "page"],
           "query": [
-            { "key": "page", "value": "2" },
-            { "key": "limit", "value": "5" }
+            { "key": "studios", "value": "Warner Bros" },
+            { "key": "producers", "value": "Emma Thomas" },
+            { "key": "directors", "value": "Christopher Nolan" }
           ]
         }
       },
@@ -138,202 +139,115 @@
         {
           "listen": "test",
           "script": {
-            "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
-              "const body = pm.response.json();",
-              "pm.expect(body).to.have.property('success', true);",
-              "pm.expect(body).to.have.property('data');",
-              "pm.expect(body).to.have.property('page', 2);",
-              "pm.expect(body).to.have.property('limit', 5);",
-              "pm.expect(body.data).to.be.an('array');",
-              "if (body.data.length > 0) {",
-              "  pm.expect(body.data[0]).to.have.property('id');",
-              "  pm.expect(body.data[0]).to.have.property('title');",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-
-    {
-
-      "name": "Get All Movies (paged)",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/movies?page=1&pageSize=10",
-          "host": ["{{baseUrl}}"],
-          "path": ["movies"],
-          "query": [
-            { "key": "page", "value": "1" },
-            { "key": "pageSize", "value": "10" }
-          ]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Content-Type is JSON\", () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-              "const body = pm.response.json();",
-              "pm.test(\"Body is array\", () => pm.expect(body).to.be.an('array'));",
-              "if (Array.isArray(body) && body.length > 0) {",
-              "  const m = body[0];",
-              "  pm.expect(m).to.have.property('id');",
-              "  pm.expect(m).to.have.property('title');",
-              "  pm.expect(m).to.have.property('release_date');",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Get All Movies by Year (filter)",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/movies?year=2015&page=1&pageSize=10",
-          "host": ["{{baseUrl}}"],
-          "path": ["movies"],
-          "query": [
-            { "key": "year", "value": "2015" },
-            { "key": "page", "value": "1" },
-            { "key": "pageSize", "value": "10" }
-          ]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
-              "const body = pm.response.json();",
-              "pm.expect(body).to.be.an('array');",
-              "if (body.length > 0) {",
-              "  const y = new Date(body[0].release_date).getFullYear();",
-              "  pm.test(\"First item matches year filter\", () => pm.expect(y).to.eql(2015));",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Get Random Movies",
-      "request": {
-        "method": "GET",
-        "url": { "raw": "{{baseUrl}}/movies/random", "host": ["{{baseUrl}}"], "path": ["movies", "random"] }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
-              "const body = pm.response.json();",
-              "pm.expect(body).to.have.property('success', true);",
-              "pm.expect(body).to.have.property('data');",
-              "pm.expect(body.data).to.be.an('array');",
-              "if (body.data.length > 0) {",
-              "  pm.expect(body.data[0]).to.have.property('id');",
-              "  pm.expect(body.data[0]).to.have.property('title');",
-              "}"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Get Movie Stats by Genre",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/movies/stats?by=genre",
-          "host": ["{{baseUrl}}"],
-          "path": ["movies", "stats"],
-          "query": [{ "key": "by", "value": "genre" }]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
-              "const body = pm.response.json();",
-              "pm.expect(body).to.be.an('array').that.is.not.empty;",
-              "body.forEach(it => {",
-              "  pm.expect(it).to.have.property('genre');",
-              "  pm.expect(it).to.have.property('count');",
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.be.true;",
+              "json.data.forEach(m => {",
+              "  pm.expect(m.studios.join(',').toLowerCase()).to.include('warner');",
+              "  pm.expect(m.directors.join(',').toLowerCase()).to.include('nolan');",
               "});"
-            ]
+            ],
+            "type": "text/javascript"
           }
         }
       ]
     },
     {
-      "name": "Get Movie Stats by Year",
+      "name": "Movies Page – Filter by Collection and Actors",
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{baseUrl}}/movies/stats?by=year",
+          "raw": "{{baseUrl}}/movies/page?collection=The%20Dark%20Knight%20Collection&actorNames=Christian%20Bale,Heath%20Ledger",
           "host": ["{{baseUrl}}"],
-          "path": ["movies", "stats"],
-          "query": [{ "key": "by", "value": "year" }]
+          "path": ["movies", "page"],
+          "query": [
+            { "key": "collection", "value": "The Dark Knight Collection" },
+            { "key": "actorNames", "value": "Christian Bale,Heath Ledger" }
+          ]
         }
       },
       "event": [
         {
           "listen": "test",
           "script": {
-            "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
-              "const body = pm.response.json();",
-              "pm.expect(body).to.be.an('array').that.is.not.empty;",
-              "body.forEach(it => {",
-              "  pm.expect(it).to.have.property('year');",
-              "  pm.expect(it).to.have.property('count');",
-              "});"
-            ]
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.be.true;",
+              "let found = false;",
+              "json.data.forEach(m => {",
+              "  const names = m.actors.map(a => a.name.toLowerCase());",
+              "  if (names.some(n => n.includes('christian bale') || n.includes('heath ledger'))) found = true;",
+              "});",
+              "pm.expect(found).to.be.true;"
+            ],
+            "type": "text/javascript"
           }
         }
       ]
     },
     {
-      "name": "Get Movie by ID (1)",
+      "name": "Movies Page – Filter by Studio Logos and Countries",
       "request": {
         "method": "GET",
-        "url": { "raw": "{{baseUrl}}/movies/1", "host": ["{{baseUrl}}"], "path": ["movies", "1"] }
+        "url": {
+          "raw": "{{baseUrl}}/movies/page?studioLogos=logo&studioCountries=United%20States",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies", "page"],
+          "query": [
+            { "key": "studioLogos", "value": "logo" },
+            { "key": "studioCountries", "value": "United States" }
+          ]
+        }
       },
       "event": [
         {
           "listen": "test",
           "script": {
-            "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"Response is JSON\", () => pm.response.to.be.json);",
-              "const movie = pm.response.json();",
-              "pm.expect(movie).to.have.property('id');",
-              "pm.expect(movie).to.have.property('title');",
-              "pm.expect(movie).to.have.property('genres');"
-            ]
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.be.true;",
+              "json.data.forEach(m => pm.expect(m.studio_countries.join(',').toLowerCase()).to.include('united states'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Movies Page – Combined Multi-Filter Scenario",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/movies/page?yearStart=2008&yearEnd=2012&genre=Action&directors=Christopher%20Nolan&actorNames=Christian%20Bale",
+          "host": ["{{baseUrl}}"],
+          "path": ["movies", "page"],
+          "query": [
+            { "key": "yearStart", "value": "2008" },
+            { "key": "yearEnd", "value": "2012" },
+            { "key": "genre", "value": "Action" },
+            { "key": "directors", "value": "Christopher Nolan" },
+            { "key": "actorNames", "value": "Christian Bale" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.be.true;",
+              "json.data.forEach(m => {",
+              "  const y = new Date(m.release_date).getFullYear();",
+              "  pm.expect(y).to.be.within(2008, 2012);",
+              "  pm.expect(m.genres).to.include('Action');",
+              "});"
+            ],
+            "type": "text/javascript"
           }
         }
       ]

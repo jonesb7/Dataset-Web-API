@@ -48,6 +48,12 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
     const runtimeMin = req.query.runtimeMin ? parseInt(String(req.query.runtimeMin), 10) : undefined;
     const runtimeMax = req.query.runtimeMax ? parseInt(String(req.query.runtimeMax), 10) : undefined;
 
+    // Budget and revenue filters
+    const budgetMin = req.query.budgetMin ? parseInt(String(req.query.budgetMin), 10) : undefined;
+    const budgetMax = req.query.budgetMax ? parseInt(String(req.query.budgetMax), 10) : undefined;
+    const revenueMin = req.query.revenueMin ? parseInt(String(req.query.revenueMin), 10) : undefined;
+    const revenueMax = req.query.revenueMax ? parseInt(String(req.query.revenueMax), 10) : undefined;
+
     // Other filters
     const year = req.query.year as string | undefined;
     const genre = req.query.genre as string | undefined;
@@ -71,13 +77,17 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
         : undefined;
 
     try {
-        const data = await listMovies({
+        const data = await listMovies(<ListArgs>{
             page,
             pageSize: limit,
             yearStart,
             yearEnd,
             runtimeMin,
             runtimeMax,
+            budgetMin,
+            budgetMax,
+            revenueMin,
+            revenueMax,
             year,
             genre,
             mpaRating,
