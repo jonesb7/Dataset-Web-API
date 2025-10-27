@@ -496,11 +496,6 @@ r.post('/:id/rating',
     }
 );
 
-// POST /api/movies/insert - Legacy CSV insert
-r.post('/insert', insertMovie);
-
-// DELETE /api/movies/delete/:id - Legacy CSV delete
-r.delete('/delete/:id', deleteMovie);
 
 // GET /api/movies/:id
 r.get('/:id',

@@ -20,7 +20,24 @@ components:
       in: header
       name: x-api-key
 
+
+
   schemas:
+    MovieInput:
+      description: Input payload for creating/updating a movie. Same as Movie without movie_id.
+      type: object
+      required: [ title ]
+      properties:
+        title: { type: string }
+        original_title: { type: string, nullable: true }
+        release_date: { type: string, format: date, nullable: true }
+        runtime: { type: integer, nullable: true }
+        genres: { type: string, nullable: true }
+        overview: { type: string, nullable: true }
+        budget: { type: integer, nullable: true }
+        revenue: { type: integer, nullable: true }
+        mpa_rating: { type: string, nullable: true }
+        country: { type: string, nullable: true }
     Movie:
       type: object
       required: [movie_id, title]
@@ -287,6 +304,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a movie
+      operationId: createMovie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - ApiKeyAuth: []
+
 
   /movies/random:
     get:
@@ -433,7 +475,7 @@ paths:
           items:
             type: string
         description: Filter by actor names (matches any in cast)
-    responses:
+  responses:
       '200':
         description: Paginated movie results with applied filters
         content:
@@ -508,3 +550,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a movie by id
+      operationId: deleteMovie
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Deleted, no content }
+        '404':
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - ApiKeyAuth: [ ]
