@@ -1,5 +1,10 @@
 ## Movie Database API
 Hosted WebAPI: https://dataset-web-api.onrender.com/api-docs/
+
+Credentials Code: 
+
+Credentials WebAPI: 
+
 ### Project Overview
 This project implements two separate Web APIs using Node.js/Express and PostgreSQL:
 
@@ -63,3 +68,33 @@ discord. Activity was a little low for most of the week but most member were fai
 ### Beta Sprint Comments
 Some difficulty planning the sprint as we were only able to actually start about halfway through the week. 
 It might be useful for the sprint descriptions to be published a little earlier so we have more time to plan. 
+
+## Beta Sprint II Contribution
+
+#### Buruk
+Added the additional routes he had begun making from last sprint, as well as setting up a render repository
+for the certification api to go in for the next sprint. 
+#### Cai
+Made a comprehensive /pages route that has filter options for all the different kinds of data contained in 
+import_movies_raw, complete with documentation and postman tests. 
+#### Victor
+N/A
+#### Brittney
+Made major fixes to the neon database, adding movies_data_raw which correctly contains all movie data as we had 
+originally intended. 
+#### Abdullahi
+Made a /protected route that works with an api key in a way that the rest of the protected 
+routes could be easily added. 
+
+
+### Beta Sprint II Meetings
+Sprint meeting on Tuesday with Buruk, Cai, and Brittney. We discussed planning for due dates for the sprint and 
+generally who needs to do what. We also discuss issues that have come up on sprints and attempt to address them. 
+After the meeting, we post a meeting summary explaining the plans for the week and the obligations each person has
+to complete. Additional impromptu meetings on Thursday and Sunday between Cai and Brittney discussing the state of the 
+project and next steps. 
+
+### Beta Sprint II Comments
+After database update we project that things should go more smoothly, as that was
+what was causing the most issues. 
+

@@ -6,7 +6,7 @@ import {
     getMovie,
     stats,
     ListArgs,
-    listMoviesByOffset,
+    // listMoviesByOffset,
     createMovie,
     updateMovie,
     patchMovie,
@@ -131,7 +131,6 @@ r.get('/page', async (req: Request, res: Response): Promise<void> => {
             success: true,
             page,
             limit,
-            offset,
             offset: (page - 1) * limit,
             data
         });
