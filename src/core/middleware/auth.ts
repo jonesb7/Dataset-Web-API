@@ -3,9 +3,8 @@ import { Request, Response, NextFunction } from 'express';
 /**
  * Authentication middleware
  *
- * Validates incoming requests using API key authorization.
- * Checks either 'x-api-key' header or 'Authorization: Bearer <key>'.
- * If valid, continues request; otherwise returns 401 Unauthorized.
+ * Validates API key from header ('x-api-key' or 'Authorization: Bearer <key>').
+ * Responds with 401 Unauthorized if the key is missing or invalid.
  */
 export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
     const apiKey =
@@ -15,8 +14,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
             : undefined);
 
     if (!apiKey || apiKey !== process.env.API_KEY) {
-        res.status(401).json({ error: 'Unauthorized: missing or invalid API key' });
-        return; // ✅ ensure consistent return type (void)
+        res.status(401).json({
+            success: false,
+            message: 'Unauthorized: missing or invalid API key',
+            code: 'UNAUTHORIZED',
+            timestamp: new Date().toISOString()
+        });
+        return;
     }
 
     next();

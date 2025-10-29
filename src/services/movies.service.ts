@@ -491,23 +491,54 @@ export async function patchMovie(id: number, updates: Partial<{
  * Delete a movie from the database
  */
 export async function deleteMovieById(id: number): Promise<boolean> {
-    // First check if movie exists
+    // Step 1: Verify the movie exists in the main table
     const checkSql = 'SELECT movie_id FROM movie WHERE movie_id = $1';
     const checkResult = await pool.query(checkSql, [id]);
 
     if (checkResult.rows.length === 0) {
+        // No movie with this ID — return false instead of error
         return false;
     }
 
-    // Delete related records first (due to foreign keys)
-    await pool.query('DELETE FROM movie_genre WHERE movie_id = $1', [id]);
-    await pool.query('DELETE FROM movie_cast WHERE movie_id = $1', [id]);
-    await pool.query('DELETE FROM movie_crew WHERE movie_id = $1', [id]);
+    /**
+     * Step 2: Conditionally delete from related tables
+     *
+     * Uses PostgreSQL's `to_regclass()` to check if a table exists.
+     * This prevents errors like "relation does not exist" if the
+     * course-provided database doesn’t include join tables.
+     */
+    async function maybeDelete(
+        tableName: 'movie_genre' | 'movie_cast' | 'movie_crew',
+        column: 'movie_id',
+        movieId: number
+    ) {
+        // Query Postgres system catalog to check if table exists
+        const { rows } = await pool.query<{ exists: string | null }>(
+            'SELECT to_regclass($1) AS exists',
+            [`public.${tableName}`]
+        );
 
-    // Now delete the movie
+        // Only delete if the table exists
+        if (rows[0]?.exists) {
+            await pool.query(`DELETE FROM ${tableName} WHERE ${column} = $1`, [movieId]);
+        }
+    }
+
+    // Attempt safe cleanup of possible related records (if tables exist)
+    await maybeDelete('movie_genre', 'movie_id', id);
+    await maybeDelete('movie_cast', 'movie_id', id);
+    await maybeDelete('movie_crew', 'movie_id', id);
+
+    /**
+     * Step 3: Delete the main movie record
+     *
+     * This will succeed as long as the movie exists
+     * and no foreign key constraints block it.
+     */
     const deleteSql = 'DELETE FROM movie WHERE movie_id = $1';
     await pool.query(deleteSql, [id]);
 
+    // Step 4: Confirm success
     return true;
 }
 
