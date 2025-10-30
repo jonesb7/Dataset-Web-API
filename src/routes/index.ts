@@ -58,7 +58,10 @@ routes.get('/', (request, response) => {
             docs: '/docs',
             protected: {
                 createMovie: 'POST /protected/movies',
-                deleteMovie: 'DELETE /protected/movies/:title'
+                updateMovie: 'PUT /protected/movies/:id',
+                patchMovie: 'PATCH /protected/movies/:id',
+                deleteMovie: 'DELETE /protected/movies/:id',
+                rateMovie: 'POST /protected/movies/:id/rating'
             }
         },
         documentation: '/api-docs'

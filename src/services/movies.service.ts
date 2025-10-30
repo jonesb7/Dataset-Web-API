@@ -722,11 +722,12 @@ export async function patchMovie(id: number, updates: Partial<{
  * Delete a movie from the database
  */
 export async function deleteMovieById(id: number): Promise<boolean> {
-    // First check if movie exists
+    // Step 1: Verify the movie exists in the main table
     const checkSql = 'SELECT movie_id FROM movie WHERE movie_id = $1';
     const checkResult = await pool.query(checkSql, [id]);
 
     if (checkResult.rows.length === 0) {
+        // No movie with this ID — return false instead of error
         return false;
     }
 
@@ -734,5 +735,6 @@ export async function deleteMovieById(id: number): Promise<boolean> {
     const deleteSql = 'DELETE FROM movie_import_raw WHERE movie_id = $1';
     await pool.query(deleteSql, [id]);
 
+    // Step 4: Confirm success
     return true;
 }
