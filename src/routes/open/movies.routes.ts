@@ -8,10 +8,8 @@ import {
     ListArgs,
     // listMoviesByOffset,
     createMovie,
-    updateMovie,
     patchMovie,
-    deleteMovieById,
-    addMovieRating
+    deleteMovieById
 } from '../../services/movies.service';
 
 import { insertMovie, deleteMovie } from '../../controllers/movieController';
@@ -19,7 +17,6 @@ import { handleValidationErrors } from '@middleware/validation';
 
 const r: Router = Router();
 
-// TODO: should be pagination with no filters
 // GET /api/movies
 r.get('/', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10));
@@ -162,49 +159,21 @@ r.get('/random', async (_req: Request, res: Response): Promise<void> => {
         res.status(500).json({ success: false, message });
     }
 });
-
-// POST /api/movies - Create a new movie
 r.post('/post',
     [
         // existing validations...
-        body('producers')
-            .optional()
-            .isString()
-            .withMessage('Producers must be a semicolon-separated string'),
-        body('directors')
-            .optional()
-            .isString()
-            .withMessage('Directors must be a semicolon-separated string'),
-        body('studios')
-            .optional()
-            .isString()
-            .withMessage('Studios must be a semicolon-separated string'),
-        body('studio_logos')
-            .optional()
-            .isString()
-            .withMessage('Studio logos must be a semicolon-separated string'),
-        body('studio_countries')
-            .optional()
-            .isString()
-            .withMessage('Studio countries must be a semicolon-separated string'),
-        body('collection')
-            .optional()
-            .isString()
-            .withMessage('Collection must be a string'),
-        body('poster_url')
-            .optional()
-            .isURL()
-            .withMessage('Poster URL must be a valid URL'),
-        body('backdrop_url')
-            .optional()
-            .isURL()
-            .withMessage('Backdrop URL must be a valid URL')
-        // Add actor fields if necessary, or accept a structured array of actors
+        body('actor1_name').optional().isString().isLength({ max: 200 }),
+        body('actor1_character').optional().isString().isLength({ max: 200 }),
+        body('actor1_profile').optional().isString(),
+        // ... similar validations for actors 2 through 10 ...
+        body('actor10_name').optional().isString().isLength({ max: 200 }),
+        body('actor10_character').optional().isString().isLength({ max: 200 }),
+        body('actor10_profile').optional().isString()
+        // other validations...
     ],
     handleValidationErrors,
     async (req: Request, res: Response): Promise<void> => {
         try {
-            // Pass all these new fields as part of movieData to the service
             const movie = await createMovie(req.body);
             res.status(201).json({
                 success: true,
@@ -225,90 +194,8 @@ r.post('/post',
 );
 
 
-// TODO: REMOVE
-// PUT /api/movies/:id - Full update of a movie
-r.put('/:id',
-    [
-        param('id')
-            .isInt({ min: 1 })
-            .withMessage('Movie ID must be a positive integer'),
-        body('title')
-            .trim()
-            .notEmpty()
-            .withMessage('Title is required')
-            .isLength({ min: 1, max: 500 })
-            .withMessage('Title must be between 1 and 500 characters'),
-        body('original_title')
-            .trim()
-            .notEmpty()
-            .withMessage('Original title is required')
-            .isLength({ max: 500 })
-            .withMessage('Original title must not exceed 500 characters'),
-        body('release_date')
-            .optional()
-            .isISO8601()
-            .withMessage('Release date must be a valid ISO date'),
-        body('runtime')
-            .isInt({ min: 0, max: 1000 })
-            .withMessage('Runtime must be between 0 and 1000 minutes'),
-        body('genres')
-            .isString()
-            .withMessage('Genres must be a string'),
-        body('overview')
-            .isString()
-            .isLength({ max: 5000 })
-            .withMessage('Overview must not exceed 5000 characters'),
-        body('budget')
-            .isInt({ min: 0 })
-            .withMessage('Budget must be a positive integer'),
-        body('revenue')
-            .isInt({ min: 0 })
-            .withMessage('Revenue must be a positive integer'),
-        body('mpa_rating')
-            .isString()
-            .isLength({ max: 10 })
-            .withMessage('MPA rating must not exceed 10 characters'),
-        body('country')
-            .isString()
-            .isLength({ max: 100 })
-            .withMessage('Country must not exceed 100 characters')
-    ],
-    handleValidationErrors,
-    async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-        try {
-            const id = parseInt(req.params.id, 10);
-            const movie = await updateMovie(id, req.body);
 
-            if (!movie) {
-                res.status(404).json({
-                    success: false,
-                    message: `Movie with ID ${id} not found`,
-                    code: 'MOVIE_NOT_FOUND',
-                    timestamp: new Date().toISOString()
-                });
-                return;
-            }
-
-            res.json({
-                success: true,
-                message: 'Movie updated successfully',
-                data: movie,
-                timestamp: new Date().toISOString()
-            });
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            res.status(500).json({
-                success: false,
-                message: `Failed to update movie: ${message}`,
-                code: 'MOVIE_UPDATE_ERROR',
-                timestamp: new Date().toISOString()
-            });
-        }
-    }
-);
-
-// PATCH /api/movies/patchID - Partial update of a movie
-r.patch('/patchID',
+r.patch('/patchID:id',
     [
         param('id')
             .isInt({ min: 1 })
@@ -317,56 +204,100 @@ r.patch('/patchID',
             .optional()
             .trim()
             .notEmpty()
-            .withMessage('Title cannot be empty')
-            .isLength({ max: 500 })
-            .withMessage('Title must not exceed 500 characters'),
+            .isLength({ max: 500 }),
         body('original_title')
             .optional()
             .trim()
-            .isLength({ max: 500 })
-            .withMessage('Original title must not exceed 500 characters'),
+            .isLength({ max: 500 }),
         body('release_date')
             .optional()
-            .isISO8601()
-            .withMessage('Release date must be a valid ISO date'),
+            .isISO8601(),
         body('runtime')
             .optional()
-            .isInt({ min: 0, max: 1000 })
-            .withMessage('Runtime must be between 0 and 1000 minutes'),
+            .isInt({ min: 0, max: 1000 }),
         body('genres')
             .optional()
-            .isString()
-            .withMessage('Genres must be a string'),
+            .isString(),
         body('overview')
             .optional()
             .isString()
-            .isLength({ max: 5000 })
-            .withMessage('Overview must not exceed 5000 characters'),
+            .isLength({ max: 5000 }),
         body('budget')
             .optional()
-            .isInt({ min: 0 })
-            .withMessage('Budget must be a positive integer'),
+            .isInt({ min: 0 }),
         body('revenue')
             .optional()
-            .isInt({ min: 0 })
-            .withMessage('Revenue must be a positive integer'),
+            .isInt({ min: 0 }),
         body('mpa_rating')
             .optional()
             .isString()
-            .isLength({ max: 10 })
-            .withMessage('MPA rating must not exceed 10 characters'),
+            .isLength({ max: 10 }),
+        body('collection')
+            .optional()
+            .isString(),
+        body('poster_url')
+            .optional()
+            .isURL(),
+        body('backdrop_url')
+            .optional()
+            .isURL(),
+        body('producers')
+            .optional()
+            .isString(),
+        body('directors')
+            .optional()
+            .isString(),
+        body('studios')
+            .optional()
+            .isString(),
+        body('studio_logos')
+            .optional()
+            .isString(),
+        body('studio_countries')
+            .optional()
+            .isString(),
         body('country')
             .optional()
             .isString()
-            .isLength({ max: 100 })
-            .withMessage('Country must not exceed 100 characters')
+            .isLength({ max: 100 }),
+
+        // Actor fields: optional strings with max length, one per actor slot
+        body('actor1_name').optional().isString().isLength({ max: 200 }),
+        body('actor1_character').optional().isString().isLength({ max: 200 }),
+        body('actor1_profile').optional().isString(),
+        body('actor2_name').optional().isString().isLength({ max: 200 }),
+        body('actor2_character').optional().isString().isLength({ max: 200 }),
+        body('actor2_profile').optional().isString(),
+        body('actor3_name').optional().isString().isLength({ max: 200 }),
+        body('actor3_character').optional().isString().isLength({ max: 200 }),
+        body('actor3_profile').optional().isString(),
+        body('actor4_name').optional().isString().isLength({ max: 200 }),
+        body('actor4_character').optional().isString().isLength({ max: 200 }),
+        body('actor4_profile').optional().isString(),
+        body('actor5_name').optional().isString().isLength({ max: 200 }),
+        body('actor5_character').optional().isString().isLength({ max: 200 }),
+        body('actor5_profile').optional().isString(),
+        body('actor6_name').optional().isString().isLength({ max: 200 }),
+        body('actor6_character').optional().isString().isLength({ max: 200 }),
+        body('actor6_profile').optional().isString(),
+        body('actor7_name').optional().isString().isLength({ max: 200 }),
+        body('actor7_character').optional().isString().isLength({ max: 200 }),
+        body('actor7_profile').optional().isString(),
+        body('actor8_name').optional().isString().isLength({ max: 200 }),
+        body('actor8_character').optional().isString().isLength({ max: 200 }),
+        body('actor8_profile').optional().isString(),
+        body('actor9_name').optional().isString().isLength({ max: 200 }),
+        body('actor9_character').optional().isString().isLength({ max: 200 }),
+        body('actor9_profile').optional().isString(),
+        body('actor10_name').optional().isString().isLength({ max: 200 }),
+        body('actor10_character').optional().isString().isLength({ max: 200 }),
+        body('actor10_profile').optional().isString()
     ],
     handleValidationErrors,
     async (req: Request<{ id: string }>, res: Response): Promise<void> => {
         try {
             const id = parseInt(req.params.id, 10);
 
-            // Check if at least one field is provided
             if (Object.keys(req.body).length === 0) {
                 res.status(400).json({
                     success: false,
@@ -407,8 +338,9 @@ r.patch('/patchID',
     }
 );
 
+
 // DELETE /api/movies/deleteID - Delete a movie
-r.delete('/deleteID',
+r.delete('/deleteID/:id',
     [
         param('id')
             .isInt({ min: 1 })
@@ -447,63 +379,9 @@ r.delete('/deleteID',
     }
 );
 
-// TODO: REMOVE
-// POST /api/movies/:id/rating - Add a rating to a movie
-r.post('/:id/rating',
-    [
-        param('id')
-            .isInt({ min: 1 })
-            .withMessage('Movie ID must be a positive integer'),
-        body('rating')
-            .isFloat({ min: 0, max: 10 })
-            .withMessage('Rating must be a number between 0 and 10'),
-        body('userId')
-            .optional()
-            .isString()
-            .isLength({ max: 100 })
-            .withMessage('User ID must not exceed 100 characters')
-    ],
-    handleValidationErrors,
-    async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-        try {
-            const movieId = parseInt(req.params.id, 10);
-            const { rating, userId } = req.body;
-
-            // First check if movie exists
-            const movie = await getMovie(movieId);
-            if (!movie) {
-                res.status(404).json({
-                    success: false,
-                    message: `Movie with ID ${movieId} not found`,
-                    code: 'MOVIE_NOT_FOUND',
-                    timestamp: new Date().toISOString()
-                });
-                return;
-            }
-
-            const ratingResult = await addMovieRating(movieId, rating, userId);
-
-            res.status(201).json({
-                success: true,
-                message: 'Rating added successfully',
-                data: ratingResult,
-                timestamp: new Date().toISOString()
-            });
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            res.status(500).json({
-                success: false,
-                message: `Failed to add rating: ${message}`,
-                code: 'RATING_ADD_ERROR',
-                timestamp: new Date().toISOString()
-            });
-        }
-    }
-);
-
 
 // GET /api/movies/getID
-r.get('/getID',
+r.get('/getID/:id',
     [
         param('id')
             .isInt({ min: 1 })

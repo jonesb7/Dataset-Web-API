@@ -401,18 +401,6 @@ export async function getRandomMovies(limit = 10) {
     return rows;
 }
 
-// TODO: REMOVE
-export async function listMoviesByOffset(limit: number, offset: number) {
-    const sql = `
-      ${BASE_SELECT}
-      ORDER BY release_date DESC NULLS LAST
-      LIMIT $1 OFFSET $2
-    `;
-
-    const { rows } = await pool.query(sql, [limit, offset]);
-    return rows;
-}
-
 /**
  * Create a new movie
  */
@@ -435,16 +423,71 @@ export async function createMovie(movieData: {
     studios?: string;
     studio_logos?: string;
     studio_countries?: string;
+
+    actor1_name?: string;
+    actor1_character?: string;
+    actor1_profile?: string;
+    actor2_name?: string;
+    actor2_character?: string;
+    actor2_profile?: string;
+    actor3_name?: string;
+    actor3_character?: string;
+    actor3_profile?: string;
+    actor4_name?: string;
+    actor4_character?: string;
+    actor4_profile?: string;
+    actor5_name?: string;
+    actor5_character?: string;
+    actor5_profile?: string;
+    actor6_name?: string;
+    actor6_character?: string;
+    actor6_profile?: string;
+    actor7_name?: string;
+    actor7_character?: string;
+    actor7_profile?: string;
+    actor8_name?: string;
+    actor8_character?: string;
+    actor8_profile?: string;
+    actor9_name?: string;
+    actor9_character?: string;
+    actor9_profile?: string;
+    actor10_name?: string;
+    actor10_character?: string;
+    actor10_profile?: string;
 }) {
     const sql = `
         INSERT INTO movie (
             title, original_title, release_date, runtime, genres,
             overview, budget, revenue, mpa_rating, country,
             collection, poster_url, backdrop_url,
-            producers, directors, studios, studio_logos, studio_countries
+            producers, directors, studios, studio_logos, studio_countries,
+            actor1_name, actor1_character, actor1_profile,
+            actor2_name, actor2_character, actor2_profile,
+            actor3_name, actor3_character, actor3_profile,
+            actor4_name, actor4_character, actor4_profile,
+            actor5_name, actor5_character, actor5_profile,
+            actor6_name, actor6_character, actor6_profile,
+            actor7_name, actor7_character, actor7_profile,
+            actor8_name, actor8_character, actor8_profile,
+            actor9_name, actor9_character, actor9_profile,
+            actor10_name, actor10_character, actor10_profile
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-            RETURNING 
+        VALUES (
+                   $1, $2, $3, $4, $5,
+                   $6, $7, $8, $9, $10,
+                   $11, $12, $13,
+                   $14, $15, $16, $17, $18,
+                   $19, $20, $21,
+                   $22, $23, $24,
+                   $25, $26, $27,
+                   $28, $29, $30,
+                   $31, $32, $33,
+                   $34, $35, $36,
+                   $37, $38, $39,
+                   $40, $41, $42,
+                   $43, $44, $45
+               )
+            RETURNING
             movie_id AS id,
             title,
             original_title,
@@ -463,7 +506,37 @@ export async function createMovie(movieData: {
             string_to_array(NULLIF(directors, ''), '; ') AS directors,
             string_to_array(NULLIF(studios, ''), '; ') AS studios,
             string_to_array(NULLIF(studio_logos, ''), '; ') AS studio_logos,
-            string_to_array(NULLIF(studio_countries, ''), '; ') AS studio_countries
+            string_to_array(NULLIF(studio_countries, ''), '; ') AS studio_countries,
+            actor1_name,
+            actor1_character,
+            actor1_profile,
+            actor2_name,
+            actor2_character,
+            actor2_profile,
+            actor3_name,
+            actor3_character,
+            actor3_profile,
+            actor4_name,
+            actor4_character,
+            actor4_profile,
+            actor5_name,
+            actor5_character,
+            actor5_profile,
+            actor6_name,
+            actor6_character,
+            actor6_profile,
+            actor7_name,
+            actor7_character,
+            actor7_profile,
+            actor8_name,
+            actor8_character,
+            actor8_profile,
+            actor9_name,
+            actor9_character,
+            actor9_profile,
+            actor10_name,
+            actor10_character,
+            actor10_profile
     `;
 
     const values = [
@@ -484,65 +557,44 @@ export async function createMovie(movieData: {
         movieData.directors || '',
         movieData.studios || '',
         movieData.studio_logos || '',
-        movieData.studio_countries || ''
+        movieData.studio_countries || '',
+
+        movieData.actor1_name || null,
+        movieData.actor1_character || null,
+        movieData.actor1_profile || null,
+        movieData.actor2_name || null,
+        movieData.actor2_character || null,
+        movieData.actor2_profile || null,
+        movieData.actor3_name || null,
+        movieData.actor3_character || null,
+        movieData.actor3_profile || null,
+        movieData.actor4_name || null,
+        movieData.actor4_character || null,
+        movieData.actor4_profile || null,
+        movieData.actor5_name || null,
+        movieData.actor5_character || null,
+        movieData.actor5_profile || null,
+        movieData.actor6_name || null,
+        movieData.actor6_character || null,
+        movieData.actor6_profile || null,
+        movieData.actor7_name || null,
+        movieData.actor7_character || null,
+        movieData.actor7_profile || null,
+        movieData.actor8_name || null,
+        movieData.actor8_character || null,
+        movieData.actor8_profile || null,
+        movieData.actor9_name || null,
+        movieData.actor9_character || null,
+        movieData.actor9_profile || null,
+        movieData.actor10_name || null,
+        movieData.actor10_character || null,
+        movieData.actor10_profile || null
     ];
 
     const { rows } = await pool.query(sql, values);
     return rows[0];
 }
 
-
-// TODO: REMOVE
-/**
- * Update an entire movie record (PUT)
- */
-export async function updateMovie(id: number, movieData: {
-    title: string;
-    original_title: string;
-    release_date?: string;
-    runtime: number;
-    genres: string;
-    overview: string;
-    budget: number;
-    revenue: number;
-    mpa_rating: string;
-    country: string;
-}) {
-    const sql = `
-        UPDATE movie
-        SET title = $1,
-            original_title = $2,
-            release_date = $3,
-            runtime = $4,
-            genres = $5,
-            overview = $6,
-            budget = $7,
-            revenue = $8,
-            mpa_rating = $9,
-            country = $10
-        WHERE movie_id = $11
-        RETURNING movie_id AS id, title, original_title, release_date,
-                  runtime AS runtime_min, string_to_array(NULLIF(genres, ''), ',') AS genres,
-                  overview, budget, revenue, mpa_rating, country
-    `;
-
-    const values = [
-        movieData.title,
-        movieData.original_title,
-        movieData.release_date || null,
-        movieData.runtime,
-        movieData.genres,
-        movieData.overview,
-        movieData.budget,
-        movieData.revenue,
-        movieData.mpa_rating,
-        movieData.country,
-        id
-    ];
-
-    const { rows } = await pool.query(sql, values);
-    return rows[0];
-}
 
 /**
  * Partially update a movie record (PATCH)
@@ -557,39 +609,126 @@ export async function patchMovie(id: number, updates: Partial<{
     budget: number;
     revenue: number;
     mpa_rating: string;
+    collection: string;
+    poster_url: string;
+    backdrop_url: string;
+    producers: string;
+    directors: string;
+    studios: string;
+    studio_logos: string;
+    studio_countries: string;
     country: string;
+
+    actor1_name: string;
+    actor1_character: string;
+    actor1_profile: string;
+    actor2_name: string;
+    actor2_character: string;
+    actor2_profile: string;
+    actor3_name: string;
+    actor3_character: string;
+    actor3_profile: string;
+    actor4_name: string;
+    actor4_character: string;
+    actor4_profile: string;
+    actor5_name: string;
+    actor5_character: string;
+    actor5_profile: string;
+    actor6_name: string;
+    actor6_character: string;
+    actor6_profile: string;
+    actor7_name: string;
+    actor7_character: string;
+    actor7_profile: string;
+    actor8_name: string;
+    actor8_character: string;
+    actor8_profile: string;
+    actor9_name: string;
+    actor9_character: string;
+    actor9_profile: string;
+    actor10_name: string;
+    actor10_character: string;
+    actor10_profile: string;
 }>) {
     const fields: string[] = [];
     const values: unknown[] = [];
-    let paramCount = 1;
+    let paramIndex = 1;
 
-    // Build dynamic SET clause
-    Object.entries(updates).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
-            fields.push(`${key} = $${paramCount}`);
+            fields.push(`${key} = $${paramIndex}`);
             values.push(value);
-            paramCount++;
+            paramIndex++;
         }
-    });
+    }
 
     if (fields.length === 0) {
         throw new Error('No fields to update');
     }
 
-    values.push(id); // Add ID as last parameter
+    values.push(id);
 
     const sql = `
         UPDATE movie
         SET ${fields.join(', ')}
-        WHERE movie_id = $${paramCount}
-        RETURNING movie_id AS id, title, original_title, release_date,
-                  runtime AS runtime_min, string_to_array(NULLIF(genres, ''), ',') AS genres,
-                  overview, budget, revenue, mpa_rating, country
+        WHERE movie_id = $${paramIndex}
+            RETURNING
+      movie_id AS id,
+      title,
+      original_title,
+      release_date,
+      runtime,
+      string_to_array(NULLIF(genres, ''), '; ') AS genres,
+      overview,
+      budget,
+      revenue,
+      mpa_rating,
+      collection,
+      poster_url,
+      backdrop_url,
+      string_to_array(NULLIF(producers, ''), '; ') AS producers,
+      string_to_array(NULLIF(directors, ''), '; ') AS directors,
+      string_to_array(NULLIF(studios, ''), '; ') AS studios,
+      string_to_array(NULLIF(studio_logos, ''), '; ') AS studio_logos,
+      string_to_array(NULLIF(studio_countries, ''), '; ') AS studio_countries,
+      country,
+      actor1_name,
+      actor1_character,
+      actor1_profile,
+      actor2_name,
+      actor2_character,
+      actor2_profile,
+      actor3_name,
+      actor3_character,
+      actor3_profile,
+      actor4_name,
+      actor4_character,
+      actor4_profile,
+      actor5_name,
+      actor5_character,
+      actor5_profile,
+      actor6_name,
+      actor6_character,
+      actor6_profile,
+      actor7_name,
+      actor7_character,
+      actor7_profile,
+      actor8_name,
+      actor8_character,
+      actor8_profile,
+      actor9_name,
+      actor9_character,
+      actor9_profile,
+      actor10_name,
+      actor10_character,
+      actor10_profile
     `;
 
     const { rows } = await pool.query(sql, values);
     return rows[0];
 }
+
+
 
 /**
  * Delete a movie from the database
@@ -614,36 +753,3 @@ export async function deleteMovieById(id: number): Promise<boolean> {
 
     return true;
 }
-
-// TODO: REMOVE
-/**
- * Add or update a rating for a movie
- */
-export async function addMovieRating(movieId: number, rating: number, userId?: string) {
-    // For now, we'll store ratings in a simple way
-    // This could be extended with a ratings table later
-    const sql = `
-        INSERT INTO movie_rating (movie_id, rating, user_id, created_at)
-        VALUES ($1, $2, $3, NOW())
-        RETURNING rating_id, movie_id, rating, user_id, created_at
-    `;
-
-    const values = [movieId, rating, userId || 'anonymous'];
-
-    try {
-        const { rows } = await pool.query(sql, values);
-        return rows[0];
-    } catch (error) {
-        // If table doesn't exist, return a mock response
-        // In production, you'd create the ratings table
-        return {
-            rating_id: Math.floor(Math.random() * 10000),
-            movie_id: movieId,
-            rating,
-            user_id: userId || 'anonymous',
-            created_at: new Date().toISOString(),
-            note: 'Rating saved (mock - ratings table not yet created)'
-        };
-    }
-}
-
