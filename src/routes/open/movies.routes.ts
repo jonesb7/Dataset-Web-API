@@ -19,47 +19,59 @@ import { handleValidationErrors } from '@middleware/validation';
 
 const r: Router = Router();
 
+// TODO: should be pagination with no filters
 // GET /api/movies
 r.get('/', async (req: Request, res: Response): Promise<void> => {
     const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10));
     const pageSize = Math.min(100, Math.max(1, Number.parseInt(String(req.query.pageSize ?? '25'), 10)));
 
-    const { year, title, genre } = req.query as {
-        year?: string;
-        title?: string;
-        genre?: string;
-    };
+    // Call listMovies with only pagination parameters, no filters
+    const args: Pick<ListArgs, 'page' | 'pageSize'> = { page, pageSize };
 
-    const args: Pick<ListArgs, 'page' | 'pageSize'> &
-        Partial<Pick<ListArgs, 'year' | 'title' | 'genre'>> = { page, pageSize };
-    if (year) args.year = year;
-    if (title) args.title = title;
-    if (genre) args.genre = genre;
-
-    const result = await listMovies(<ListArgs>args);
-    res.json(result);
+    try {
+        const result = await listMovies(args);
+        res.json(result);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({ success: false, message });
+    }
 });
 
-// GET /api/movies/stats?by=year|genre
+
+const allowedStatsKeys = [
+    'genre', 'year', 'mpa_rating', 'producers', 'directors',
+    'studios', 'collection', 'runtime', 'budget', 'revenue'
+];
+
 r.get('/stats',
     [
         query('by')
             .optional()
-            .isIn(['year', 'genre'])
-            .withMessage('by parameter must be either "year" or "genre"')
+            .isIn(allowedStatsKeys)
+            .withMessage(`by parameter must be one of: ${allowedStatsKeys.join(', ')}`)
     ],
     handleValidationErrors,
     async (req: Request, res: Response): Promise<void> => {
-        const by = String(req.query.by ?? 'year');
-        const result = await stats(by);
-        res.json({
-            success: true,
-            data: result,
-            groupedBy: by,
-            timestamp: new Date().toISOString()
-        });
+        try {
+            const by = String(req.query.by ?? 'year').toLowerCase();
+            const result = await stats(by);
+
+            const isNumericStat = ['runtime', 'budget', 'revenue'].includes(by);
+
+            res.json({
+                success: true,
+                groupedBy: by,
+                data: result,
+                ...(isNumericStat ? {} : { count: Array.isArray(result) ? result.length : 1 }),
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            res.status(400).json({ success: false, message });
+        }
     }
 );
+
 
 // GET /api/movies/page (multi-filter + pagination)
 r.get('/page', async (req: Request, res: Response): Promise<void> => {
@@ -150,59 +162,49 @@ r.get('/random', async (_req: Request, res: Response): Promise<void> => {
         res.status(500).json({ success: false, message });
     }
 });
+
 // POST /api/movies - Create a new movie
-r.post('/',
+r.post('/post',
     [
-        body('title')
-            .trim()
-            .notEmpty()
-            .withMessage('Title is required')
-            .isLength({ min: 1, max: 500 })
-            .withMessage('Title must be between 1 and 500 characters'),
-        body('original_title')
-            .optional()
-            .trim()
-            .isLength({ max: 500 })
-            .withMessage('Original title must not exceed 500 characters'),
-        body('release_date')
-            .optional()
-            .isISO8601()
-            .withMessage('Release date must be a valid ISO date (YYYY-MM-DD)'),
-        body('runtime')
-            .optional()
-            .isInt({ min: 0, max: 1000 })
-            .withMessage('Runtime must be a positive integer (0-1000 minutes)'),
-        body('genres')
+        // existing validations...
+        body('producers')
             .optional()
             .isString()
-            .withMessage('Genres must be a comma-separated string'),
-        body('overview')
+            .withMessage('Producers must be a semicolon-separated string'),
+        body('directors')
             .optional()
             .isString()
-            .isLength({ max: 5000 })
-            .withMessage('Overview must not exceed 5000 characters'),
-        body('budget')
-            .optional()
-            .isInt({ min: 0 })
-            .withMessage('Budget must be a positive integer'),
-        body('revenue')
-            .optional()
-            .isInt({ min: 0 })
-            .withMessage('Revenue must be a positive integer'),
-        body('mpa_rating')
+            .withMessage('Directors must be a semicolon-separated string'),
+        body('studios')
             .optional()
             .isString()
-            .isLength({ max: 10 })
-            .withMessage('MPA rating must not exceed 10 characters'),
-        body('country')
+            .withMessage('Studios must be a semicolon-separated string'),
+        body('studio_logos')
             .optional()
             .isString()
-            .isLength({ max: 100 })
-            .withMessage('Country must not exceed 100 characters')
+            .withMessage('Studio logos must be a semicolon-separated string'),
+        body('studio_countries')
+            .optional()
+            .isString()
+            .withMessage('Studio countries must be a semicolon-separated string'),
+        body('collection')
+            .optional()
+            .isString()
+            .withMessage('Collection must be a string'),
+        body('poster_url')
+            .optional()
+            .isURL()
+            .withMessage('Poster URL must be a valid URL'),
+        body('backdrop_url')
+            .optional()
+            .isURL()
+            .withMessage('Backdrop URL must be a valid URL')
+        // Add actor fields if necessary, or accept a structured array of actors
     ],
     handleValidationErrors,
     async (req: Request, res: Response): Promise<void> => {
         try {
+            // Pass all these new fields as part of movieData to the service
             const movie = await createMovie(req.body);
             res.status(201).json({
                 success: true,
@@ -222,6 +224,8 @@ r.post('/',
     }
 );
 
+
+// TODO: REMOVE
 // PUT /api/movies/:id - Full update of a movie
 r.put('/:id',
     [
@@ -303,8 +307,8 @@ r.put('/:id',
     }
 );
 
-// PATCH /api/movies/:id - Partial update of a movie
-r.patch('/:id',
+// PATCH /api/movies/patchID - Partial update of a movie
+r.patch('/patchID',
     [
         param('id')
             .isInt({ min: 1 })
@@ -403,8 +407,8 @@ r.patch('/:id',
     }
 );
 
-// DELETE /api/movies/:id - Delete a movie
-r.delete('/:id',
+// DELETE /api/movies/deleteID - Delete a movie
+r.delete('/deleteID',
     [
         param('id')
             .isInt({ min: 1 })
@@ -443,6 +447,7 @@ r.delete('/:id',
     }
 );
 
+// TODO: REMOVE
 // POST /api/movies/:id/rating - Add a rating to a movie
 r.post('/:id/rating',
     [
@@ -497,8 +502,8 @@ r.post('/:id/rating',
 );
 
 
-// GET /api/movies/:id
-r.get('/:id',
+// GET /api/movies/getID
+r.get('/getID',
     [
         param('id')
             .isInt({ min: 1 })
