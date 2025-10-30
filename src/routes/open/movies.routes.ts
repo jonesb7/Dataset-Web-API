@@ -10,9 +10,8 @@ import {
     createMovie,
     patchMovie,
     deleteMovieById
-} from '../../services/movies.service';
+} from '@/services/movies.service';
 
-import { insertMovie, deleteMovie } from '../../controllers/movieController';
 import { handleValidationErrors } from '@middleware/validation';
 
 const r: Router = Router();
@@ -256,10 +255,7 @@ r.patch('/patchID:id',
         body('studio_countries')
             .optional()
             .isString(),
-        body('country')
-            .optional()
-            .isString()
-            .isLength({ max: 100 }),
+
 
         // Actor fields: optional strings with max length, one per actor slot
         body('actor1_name').optional().isString().isLength({ max: 200 }),
