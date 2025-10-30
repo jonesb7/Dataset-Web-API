@@ -280,49 +280,115 @@ export async function getMovie(id: number) {
 }
 
 /**
- * Statistics by 'genre' or 'year'.
- * - by=genre: counts per genre (from comma-separated TEXT)
- * - by=year:  robust year extraction from release_date::text
+ Generates summary statistics for movies data grouped by various fields.
+ Supports grouping by:
+ 'genre': Counts number of movies per genre (splitting multi-valued genre strings).
+ 'year': Counts movies by release year extracted robustly from release_date.
+ 'mpa_rating': Counts movies by MPA rating category.
+ 'producers', 'directors', 'studios', 'collection': Counts movies by these multi-valued string fields.
+ 'runtime', 'budget', 'revenue': Provides numeric aggregate statistics (count, avg, min, max, sum).
+ Uses efficient SQL queries with string splitting, unnesting, and aggregation directly in PostgreSQL.
+ Throws an error if an unsupported grouping key is requested.
+ @param by The variable to group statistics by (e.g., 'genre', 'year', 'mpa_rating', 'directors', etc.).
+ @returns An array of grouped statistics (counts or aggregates), or a single aggregate object for numeric fields.
+ @throws Error if the provided 'by' parameter is not supported.
+  This function enables flexible statistical analysis of the movie dataset for reporting,
+  filtering, and analytics in a backend API context.
  */
+
 export async function stats(by: string) {
-    const key = by === 'genre' ? 'genre' : 'year';
+    const key = by?.toLowerCase();
 
     if (key === 'genre') {
+        // Count movies per genre (multi-value array)
         const sql = `
-            SELECT g AS genre, COUNT(*)::int AS count
+            SELECT genre, COUNT(*)::int AS count
             FROM (
-                SELECT string_to_array(NULLIF(genres, ''), ',') AS garr
+                SELECT unnest(string_to_array(NULLIF(genres, ''), '; ')) AS genre
                 FROM movie
-                ) t,
-                LATERAL unnest(t.garr) AS g
-            GROUP BY g
-            ORDER BY count DESC, g ASC
+                ) sub
+            GROUP BY genre
+            ORDER BY count DESC, genre ASC;
         `;
         const { rows } = await pool.query(sql);
         return rows;
     }
 
-    // by=year — safe across DATE/TIMESTAMP/text/ISO
-    const sql = `
-        WITH years AS (
+    if (key === 'year') {
+        // Count movies per release year, extracting year robustly
+        const sql = `
+            WITH years AS (
+                SELECT
+                    CASE
+                        WHEN LEFT(release_date::text, 4) ~ '^[0-9]{4}$'
+                        THEN LEFT(release_date::text, 4)::int
+                        ELSE NULL
+                    END AS year
+                FROM movie
+                WHERE release_date IS NOT NULL
+            )
+            SELECT year, COUNT(*)::int AS count
+            FROM years
+            WHERE year IS NOT NULL
+            GROUP BY year
+            ORDER BY year;
+        `;
+        const { rows } = await pool.query(sql);
+        return rows;
+    }
+
+    if (key === 'mpa_rating') {
+        // Count movies by MPA rating
+        const sql = `
+            SELECT mpa_rating, COUNT(*)::int AS count
+            FROM movie
+            WHERE mpa_rating IS NOT NULL AND mpa_rating <> ''
+            GROUP BY mpa_rating
+            ORDER BY count DESC, mpa_rating ASC;
+        `;
+        const { rows } = await pool.query(sql);
+        return rows;
+    }
+
+    // Multi-value string fields: producers, directors, studios, collection
+    if (['producers', 'directors', 'studios', 'collection'].includes(key)) {
+        const column = key === 'collection' ? 'collection' : key;
+        const sql = `
+            SELECT value, COUNT(*)::int AS count
+            FROM (
+                SELECT ${key} 
+                FROM movie
+                WHERE ${key} IS NOT NULL AND ${key} <> ''
+            ) base,
+            LATERAL unnest(string_to_array(NULLIF(${key}, ''), '; ')) AS value
+            GROUP BY value
+            ORDER BY count DESC, value ASC;
+        `;
+        const { rows } = await pool.query(sql);
+        return rows;
+    }
+
+    // Numeric statistics for runtime, budget, revenue
+    if (['runtime', 'budget', 'revenue'].includes(key)) {
+        const column = key;
+        const sql = `
             SELECT
-                CASE
-                    WHEN LEFT(release_date::text, 4) ~ '^[0-9]{4}$'
-            THEN LEFT(release_date::text, 4)::int
-            ELSE NULL
-        END AS year
-      FROM movie
-      WHERE release_date IS NOT NULL
-    )
-        SELECT year, COUNT(*)::int AS count
-        FROM years
-        WHERE year IS NOT NULL
-        GROUP BY year
-        ORDER BY year
-    `;
-    const { rows } = await pool.query(sql);
-    return rows;
+                COUNT(*) AS count,
+                AVG(${column})::numeric(10,2) AS avg,
+                MIN(${column}) AS min,
+                MAX(${column}) AS max,
+                SUM(${column}) AS sum
+            FROM movie
+            WHERE ${column} IS NOT NULL AND ${column} > 0;
+        `;
+        const { rows } = await pool.query(sql);
+        return rows[0]; // returns summary stats single object
+    }
+
+    // Default fallback - unknown key
+    throw new Error(`Unsupported stats key: ${by}. Supported keys: genre, year, mpa_rating, producers, directors, studios, collection, runtime, budget, revenue.`);
 }
+
 
 export async function getRandomMovies(limit = 10) {
     const sql = `
@@ -335,20 +401,6 @@ export async function getRandomMovies(limit = 10) {
     return rows;
 }
 
-export async function listMoviesByOffset(limit: number, offset: number) {
-    const sql = `
-      ${BASE_SELECT}
-      ORDER BY release_date DESC NULLS LAST
-      LIMIT $1 OFFSET $2
-    `;
-
-    const { rows } = await pool.query(sql, [limit, offset]);
-    return rows;
-}
-
-/**
- * Create a new movie
- */
 export async function createMovie(movieData: {
     title: string;
     original_title?: string;
@@ -359,86 +411,180 @@ export async function createMovie(movieData: {
     budget?: number;
     revenue?: number;
     mpa_rating?: string;
-    country?: string;
-}) {
-    const sql = `
-        INSERT INTO movie (
-            title, original_title, release_date, runtime, genres,
-            overview, budget, revenue, mpa_rating, country
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING movie_id AS id, title, original_title, release_date,
-                  runtime AS runtime_min, string_to_array(NULLIF(genres, ''), ',') AS genres,
-                  overview, budget, revenue, mpa_rating, country
-    `;
+    collection?: string;
+    poster_url?: string;
+    backdrop_url?: string;
+    producers?: string;
+    directors?: string;
+    studios?: string;
+    studio_logos?: string;
+    studio_countries?: string;
 
+    actor1_name?: string;
+    actor1_character?: string;
+    actor1_profile?: string;
+    actor2_name?: string;
+    actor2_character?: string;
+    actor2_profile?: string;
+    actor3_name?: string;
+    actor3_character?: string;
+    actor3_profile?: string;
+    actor4_name?: string;
+    actor4_character?: string;
+    actor4_profile?: string;
+    actor5_name?: string;
+    actor5_character?: string;
+    actor5_profile?: string;
+    actor6_name?: string;
+    actor6_character?: string;
+    actor6_profile?: string;
+    actor7_name?: string;
+    actor7_character?: string;
+    actor7_profile?: string;
+    actor8_name?: string;
+    actor8_character?: string;
+    actor8_profile?: string;
+    actor9_name?: string;
+    actor9_character?: string;
+    actor9_profile?: string;
+    actor10_name?: string;
+    actor10_character?: string;
+    actor10_profile?: string;
+}) {
+    if (!movieData.title || movieData.title.trim() === '') {
+        throw new Error('Title is required to create a movie');
+    }
+
+    // Normalize genre separators to semicolon
+    const normalizedGenres = movieData.genres ? movieData.genres.replace(/,/g, ';') : '';
+
+    // List columns to insert (must match values length)
+    const columns = [
+        'title', 'original_title', 'release_date', 'runtime', 'genres',
+        'overview', 'budget', 'revenue', 'mpa_rating', 'collection',
+        'poster_url', 'backdrop_url', 'producers', 'directors', 'studios',
+        'studio_logos', 'studio_countries'
+    ];
+
+    // Add actor columns dynamically for 10 actors × 3 fields each
+    for (let i = 1; i <= 10; i++) {
+        columns.push(`actor${i}_name`, `actor${i}_character`, `actor${i}_profile`);
+    }
+
+    // Create placeholders like $1, $2, ..., matching columns count
+    const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(', ');
+
+    // SQL insert statement ensuring the number of columns equals number of placeholders
+    const sql = `
+    INSERT INTO movie_import_raw (${columns.join(', ')})
+    VALUES (${placeholders})
+    RETURNING
+      movie_id AS id,
+      title,
+      original_title,
+      release_date,
+      runtime,
+      string_to_array(NULLIF(genres, ''), '; ') AS genres,
+      overview,
+      budget,
+      revenue,
+      mpa_rating,
+      collection,
+      poster_url,
+      backdrop_url,
+      string_to_array(NULLIF(producers, ''), '; ') AS producers,
+      string_to_array(NULLIF(directors, ''), '; ') AS directors,
+      string_to_array(NULLIF(studios, ''), '; ') AS studios,
+      string_to_array(NULLIF(studio_logos, ''), '; ') AS studio_logos,
+      string_to_array(NULLIF(studio_countries, ''), '; ') AS studio_countries,
+      actor1_name,
+      actor1_character,
+      actor1_profile,
+      actor2_name,
+      actor2_character,
+      actor2_profile,
+      actor3_name,
+      actor3_character,
+      actor3_profile,
+      actor4_name,
+      actor4_character,
+      actor4_profile,
+      actor5_name,
+      actor5_character,
+      actor5_profile,
+      actor6_name,
+      actor6_character,
+      actor6_profile,
+      actor7_name,
+      actor7_character,
+      actor7_profile,
+      actor8_name,
+      actor8_character,
+      actor8_profile,
+      actor9_name,
+      actor9_character,
+      actor9_profile,
+      actor10_name,
+      actor10_character,
+      actor10_profile
+  `;
+
+    // Build values array in exact column order
     const values = [
         movieData.title,
         movieData.original_title || movieData.title,
         movieData.release_date || null,
-        movieData.runtime || 0,
-        movieData.genres || '',
+        movieData.runtime ?? null,
+        normalizedGenres,
         movieData.overview || '',
-        movieData.budget || 0,
-        movieData.revenue || 0,
+        movieData.budget ?? null,
+        movieData.revenue ?? null,
         movieData.mpa_rating || '',
-        movieData.country || ''
+        movieData.collection || '',
+        movieData.poster_url || '',
+        movieData.backdrop_url || '',
+        movieData.producers || '',
+        movieData.directors || '',
+        movieData.studios || '',
+        movieData.studio_logos || '',
+        movieData.studio_countries || '',
+        // Actor fields flattened
+        movieData.actor1_name || null,
+        movieData.actor1_character || null,
+        movieData.actor1_profile || null,
+        movieData.actor2_name || null,
+        movieData.actor2_character || null,
+        movieData.actor2_profile || null,
+        movieData.actor3_name || null,
+        movieData.actor3_character || null,
+        movieData.actor3_profile || null,
+        movieData.actor4_name || null,
+        movieData.actor4_character || null,
+        movieData.actor4_profile || null,
+        movieData.actor5_name || null,
+        movieData.actor5_character || null,
+        movieData.actor5_profile || null,
+        movieData.actor6_name || null,
+        movieData.actor6_character || null,
+        movieData.actor6_profile || null,
+        movieData.actor7_name || null,
+        movieData.actor7_character || null,
+        movieData.actor7_profile || null,
+        movieData.actor8_name || null,
+        movieData.actor8_character || null,
+        movieData.actor8_profile || null,
+        movieData.actor9_name || null,
+        movieData.actor9_character || null,
+        movieData.actor9_profile || null,
+        movieData.actor10_name || null,
+        movieData.actor10_character || null,
+        movieData.actor10_profile || null
     ];
 
     const { rows } = await pool.query(sql, values);
     return rows[0];
 }
 
-/**
- * Update an entire movie record (PUT)
- */
-export async function updateMovie(id: number, movieData: {
-    title: string;
-    original_title: string;
-    release_date?: string;
-    runtime: number;
-    genres: string;
-    overview: string;
-    budget: number;
-    revenue: number;
-    mpa_rating: string;
-    country: string;
-}) {
-    const sql = `
-        UPDATE movie
-        SET title = $1,
-            original_title = $2,
-            release_date = $3,
-            runtime = $4,
-            genres = $5,
-            overview = $6,
-            budget = $7,
-            revenue = $8,
-            mpa_rating = $9,
-            country = $10
-        WHERE movie_id = $11
-        RETURNING movie_id AS id, title, original_title, release_date,
-                  runtime AS runtime_min, string_to_array(NULLIF(genres, ''), ',') AS genres,
-                  overview, budget, revenue, mpa_rating, country
-    `;
-
-    const values = [
-        movieData.title,
-        movieData.original_title,
-        movieData.release_date || null,
-        movieData.runtime,
-        movieData.genres,
-        movieData.overview,
-        movieData.budget,
-        movieData.revenue,
-        movieData.mpa_rating,
-        movieData.country,
-        id
-    ];
-
-    const { rows } = await pool.query(sql, values);
-    return rows[0];
-}
 
 /**
  * Partially update a movie record (PATCH)
@@ -453,39 +599,124 @@ export async function patchMovie(id: number, updates: Partial<{
     budget: number;
     revenue: number;
     mpa_rating: string;
-    country: string;
+    collection: string;
+    poster_url: string;
+    backdrop_url: string;
+    producers: string;
+    directors: string;
+    studios: string;
+    studio_logos: string;
+    studio_countries: string;
+
+    actor1_name: string;
+    actor1_character: string;
+    actor1_profile: string;
+    actor2_name: string;
+    actor2_character: string;
+    actor2_profile: string;
+    actor3_name: string;
+    actor3_character: string;
+    actor3_profile: string;
+    actor4_name: string;
+    actor4_character: string;
+    actor4_profile: string;
+    actor5_name: string;
+    actor5_character: string;
+    actor5_profile: string;
+    actor6_name: string;
+    actor6_character: string;
+    actor6_profile: string;
+    actor7_name: string;
+    actor7_character: string;
+    actor7_profile: string;
+    actor8_name: string;
+    actor8_character: string;
+    actor8_profile: string;
+    actor9_name: string;
+    actor9_character: string;
+    actor9_profile: string;
+    actor10_name: string;
+    actor10_character: string;
+    actor10_profile: string;
 }>) {
     const fields: string[] = [];
     const values: unknown[] = [];
-    let paramCount = 1;
+    let paramIndex = 1;
 
-    // Build dynamic SET clause
-    Object.entries(updates).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
-            fields.push(`${key} = $${paramCount}`);
+            fields.push(`${key} = $${paramIndex}`);
             values.push(value);
-            paramCount++;
+            paramIndex++;
         }
-    });
+    }
 
     if (fields.length === 0) {
         throw new Error('No fields to update');
     }
 
-    values.push(id); // Add ID as last parameter
+    values.push(id);
 
     const sql = `
-        UPDATE movie
+        UPDATE movie_import_raw
         SET ${fields.join(', ')}
-        WHERE movie_id = $${paramCount}
-        RETURNING movie_id AS id, title, original_title, release_date,
-                  runtime AS runtime_min, string_to_array(NULLIF(genres, ''), ',') AS genres,
-                  overview, budget, revenue, mpa_rating, country
+        WHERE movie_id = $${paramIndex}
+            RETURNING
+      movie_id AS id,
+      title,
+      original_title,
+      release_date,
+      runtime,
+      string_to_array(NULLIF(genres, ''), '; ') AS genres,
+      overview,
+      budget,
+      revenue,
+      mpa_rating,
+      collection,
+      poster_url,
+      backdrop_url,
+      string_to_array(NULLIF(producers, ''), '; ') AS producers,
+      string_to_array(NULLIF(directors, ''), '; ') AS directors,
+      string_to_array(NULLIF(studios, ''), '; ') AS studios,
+      string_to_array(NULLIF(studio_logos, ''), '; ') AS studio_logos,
+      string_to_array(NULLIF(studio_countries, ''), '; ') AS studio_countries,
+      actor1_name,
+      actor1_character,
+      actor1_profile,
+      actor2_name,
+      actor2_character,
+      actor2_profile,
+      actor3_name,
+      actor3_character,
+      actor3_profile,
+      actor4_name,
+      actor4_character,
+      actor4_profile,
+      actor5_name,
+      actor5_character,
+      actor5_profile,
+      actor6_name,
+      actor6_character,
+      actor6_profile,
+      actor7_name,
+      actor7_character,
+      actor7_profile,
+      actor8_name,
+      actor8_character,
+      actor8_profile,
+      actor9_name,
+      actor9_character,
+      actor9_profile,
+      actor10_name,
+      actor10_character,
+      actor10_profile
     `;
 
     const { rows } = await pool.query(sql, values);
     return rows[0];
 }
+
+
 
 /**
  * Delete a movie from the database
@@ -500,76 +731,10 @@ export async function deleteMovieById(id: number): Promise<boolean> {
         return false;
     }
 
-    /**
-     * Step 2: Conditionally delete from related tables
-     *
-     * Uses PostgreSQL's `to_regclass()` to check if a table exists.
-     * This prevents errors like "relation does not exist" if the
-     * course-provided database doesn’t include join tables.
-     */
-    async function maybeDelete(
-        tableName: 'movie_genre' | 'movie_cast' | 'movie_crew',
-        column: 'movie_id',
-        movieId: number
-    ) {
-        // Query Postgres system catalog to check if table exists
-        const { rows } = await pool.query<{ exists: string | null }>(
-            'SELECT to_regclass($1) AS exists',
-            [`public.${tableName}`]
-        );
-
-        // Only delete if the table exists
-        if (rows[0]?.exists) {
-            await pool.query(`DELETE FROM ${tableName} WHERE ${column} = $1`, [movieId]);
-        }
-    }
-
-    // Attempt safe cleanup of possible related records (if tables exist)
-    await maybeDelete('movie_genre', 'movie_id', id);
-    await maybeDelete('movie_cast', 'movie_id', id);
-    await maybeDelete('movie_crew', 'movie_id', id);
-
-    /**
-     * Step 3: Delete the main movie record
-     *
-     * This will succeed as long as the movie exists
-     * and no foreign key constraints block it.
-     */
-    const deleteSql = 'DELETE FROM movie WHERE movie_id = $1';
+    // Now delete the movie
+    const deleteSql = 'DELETE FROM movie_import_raw WHERE movie_id = $1';
     await pool.query(deleteSql, [id]);
 
     // Step 4: Confirm success
     return true;
 }
-
-/**
- * Add or update a rating for a movie
- */
-export async function addMovieRating(movieId: number, rating: number, userId?: string) {
-    // For now, we'll store ratings in a simple way
-    // This could be extended with a ratings table later
-    const sql = `
-        INSERT INTO movie_rating (movie_id, rating, user_id, created_at)
-        VALUES ($1, $2, $3, NOW())
-        RETURNING rating_id, movie_id, rating, user_id, created_at
-    `;
-
-    const values = [movieId, rating, userId || 'anonymous'];
-
-    try {
-        const { rows } = await pool.query(sql, values);
-        return rows[0];
-    } catch (error) {
-        // If table doesn't exist, return a mock response
-        // In production, you'd create the ratings table
-        return {
-            rating_id: Math.floor(Math.random() * 10000),
-            movie_id: movieId,
-            rating,
-            user_id: userId || 'anonymous',
-            created_at: new Date().toISOString(),
-            note: 'Rating saved (mock - ratings table not yet created)'
-        };
-    }
-}
-
