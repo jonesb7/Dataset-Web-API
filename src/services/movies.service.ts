@@ -743,12 +743,12 @@ export async function deleteMovieById(id: number): Promise<boolean> {
     }
 
     // Delete related records first (due to foreign keys)
-    await pool.query('DELETE FROM movie_genre WHERE movie_id = $1', [id]);
-    await pool.query('DELETE FROM movie_cast WHERE movie_id = $1', [id]);
-    await pool.query('DELETE FROM movie_crew WHERE movie_id = $1', [id]);
+    //await pool.query('DELETE FROM movie_genre WHERE movie_id = $1', [id]);
+    //await pool.query('DELETE FROM movie_cast WHERE movie_id = $1', [id]);
+    //await pool.query('DELETE FROM movie_crew WHERE movie_id = $1', [id]);
 
     // Now delete the movie
-    const deleteSql = 'DELETE FROM movie WHERE movie_id = $1';
+    const deleteSql = 'DELETE FROM movie_import_raw WHERE movie_id = $1';
     await pool.query(deleteSql, [id]);
 
     return true;
