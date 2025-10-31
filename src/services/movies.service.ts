@@ -723,7 +723,7 @@ export async function patchMovie(id: number, updates: Partial<{
  */
 export async function deleteMovieById(id: number): Promise<boolean> {
     // Step 1: Verify the movie exists in the main table
-    const checkSql = 'SELECT movie_id FROM movie WHERE movie_id = $1';
+    const checkSql = 'SELECT movie_id FROM movie_import_raw WHERE movie_id = $1';
     const checkResult = await pool.query(checkSql, [id]);
 
     if (checkResult.rows.length === 0) {
