@@ -1,43 +1,33 @@
 /**
- * Protected Movie Routes (WRITE operations)
- * -----------------------------------------
- * Handles all authenticated movie modification endpoints under `/protected`.
+ * Protected Movie Routes — mirror open routes with write access locked behind API key.
  *
- * These routes require a valid API key (via `authMiddleware`) and provide:
- *  - POST   /protected/movies
- *  - PUT    /protected/movies/:id
- *  - PATCH  /protected/movies/:id
- *  - DELETE /protected/movies/:id
- *  - POST   /protected/movies/:id/rating
+ * Endpoints (mounted under /protected):
+ *   POST   /protected/post            -> createMovie
+ *   PATCH  /protected/patchID/:id     -> patchMovie
+ *   DELETE /protected/deleteID/:id    -> deleteMovieById
+ *
  *
  */
 
 import { Router, Request, Response } from 'express';
 import { param, body } from 'express-validator';
 import { authMiddleware } from '@middleware/auth';
-import {
-    createMovie,
-    updateMovie,
-    patchMovie,
-    deleteMovieById,
-    addMovieRating,
-    getMovie
-} from '../../services/movies.service';
+import { createMovie, patchMovie, deleteMovieById } from '@/services/movies.service';
 import { handleValidationErrors } from '@middleware/validation';
 
 const r: Router = Router();
 
-// Require API key for all protected routes
+// Require API key for everything in this router
 r.use(authMiddleware);
 
 /**
- * POST /protected/movies
- * Create a new movie
+ * POST /protected/post
+ * Create a new movie (same validator surface as open route)
  */
 r.post(
-    '/movies',
+    '/post',
     [
-        body('title').trim().notEmpty().isLength({ min: 1, max: 500 }),
+        body('title').trim().notEmpty().isLength({ max: 500 }),
         body('original_title').optional().trim().isLength({ max: 500 }),
         body('release_date').optional().isISO8601(),
         body('runtime').optional().isInt({ min: 0, max: 1000 }),
@@ -46,7 +36,46 @@ r.post(
         body('budget').optional().isInt({ min: 0 }),
         body('revenue').optional().isInt({ min: 0 }),
         body('mpa_rating').optional().isString().isLength({ max: 10 }),
-        body('country').optional().isString().isLength({ max: 100 })
+        body('collection').optional().isString(),
+        body('poster_url').optional().isString(),
+        body('backdrop_url').optional().isString(),
+        body('producers').optional().isString(),
+        body('directors').optional().isString(),
+        body('studios').optional().isString(),
+        body('studio_logos').optional().isString(),
+        body('studio_countries').optional().isString(),
+
+        // Actors 1–10
+        body('actor1_name').optional().isString().isLength({ max: 200 }),
+        body('actor1_character').optional().isString().isLength({ max: 200 }),
+        body('actor1_profile').optional().isString(),
+        body('actor2_name').optional().isString().isLength({ max: 200 }),
+        body('actor2_character').optional().isString().isLength({ max: 200 }),
+        body('actor2_profile').optional().isString(),
+        body('actor3_name').optional().isString().isLength({ max: 200 }),
+        body('actor3_character').optional().isString().isLength({ max: 200 }),
+        body('actor3_profile').optional().isString(),
+        body('actor4_name').optional().isString().isLength({ max: 200 }),
+        body('actor4_character').optional().isString().isLength({ max: 200 }),
+        body('actor4_profile').optional().isString(),
+        body('actor5_name').optional().isString().isLength({ max: 200 }),
+        body('actor5_character').optional().isString().isLength({ max: 200 }),
+        body('actor5_profile').optional().isString(),
+        body('actor6_name').optional().isString().isLength({ max: 200 }),
+        body('actor6_character').optional().isString().isLength({ max: 200 }),
+        body('actor6_profile').optional().isString(),
+        body('actor7_name').optional().isString().isLength({ max: 200 }),
+        body('actor7_character').optional().isString().isLength({ max: 200 }),
+        body('actor7_profile').optional().isString(),
+        body('actor8_name').optional().isString().isLength({ max: 200 }),
+        body('actor8_character').optional().isString().isLength({ max: 200 }),
+        body('actor8_profile').optional().isString(),
+        body('actor9_name').optional().isString().isLength({ max: 200 }),
+        body('actor9_character').optional().isString().isLength({ max: 200 }),
+        body('actor9_profile').optional().isString(),
+        body('actor10_name').optional().isString().isLength({ max: 200 }),
+        body('actor10_character').optional().isString().isLength({ max: 200 }),
+        body('actor10_profile').optional().isString()
     ],
     handleValidationErrors,
     async (req: Request, res: Response): Promise<void> => {
@@ -71,63 +100,63 @@ r.post(
 );
 
 /**
- * PUT /protected/movies/:id
- */
-r.put(
-    '/movies/:id',
-    [
-        param('id').isInt({ min: 1 }),
-        body('title').trim().notEmpty().isLength({ min: 1, max: 500 }),
-        body('original_title').trim().notEmpty().isLength({ max: 500 }),
-        body('release_date').optional().isISO8601(),
-        body('runtime').isInt({ min: 0, max: 1000 }),
-        body('genres').isString(),
-        body('overview').isString().isLength({ max: 5000 }),
-        body('budget').isInt({ min: 0 }),
-        body('revenue').isInt({ min: 0 }),
-        body('mpa_rating').isString().isLength({ max: 10 }),
-        body('country').isString().isLength({ max: 100 })
-    ],
-    handleValidationErrors,
-    async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-        try {
-            const id = parseInt(req.params.id, 10);
-            const movie = await updateMovie(id, req.body);
-
-            if (!movie) {
-                res.status(404).json({
-                    success: false,
-                    message: `Movie with ID ${id} not found`,
-                    code: 'MOVIE_NOT_FOUND',
-                    timestamp: new Date().toISOString()
-                });
-                return;
-            }
-
-            res.json({
-                success: true,
-                message: 'Movie updated successfully',
-                data: movie,
-                timestamp: new Date().toISOString()
-            });
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            res.status(500).json({
-                success: false,
-                message: `Failed to update movie: ${message}`,
-                code: 'MOVIE_UPDATE_ERROR',
-                timestamp: new Date().toISOString()
-            });
-        }
-    }
-);
-
-/**
- * PATCH /protected/movies/:id
+ * PATCH /protected/patchID/:id
+ * Partial update (same behavior as open route)
  */
 r.patch(
-    '/movies/:id',
-    [param('id').isInt({ min: 1 })],
+    '/patchID/:id',
+    [
+        param('id').isInt({ min: 1 }).withMessage('Movie ID must be a positive integer'),
+        body('title').optional().trim().notEmpty().isLength({ max: 500 }),
+        body('original_title').optional().trim().isLength({ max: 500 }),
+        body('release_date').optional().isISO8601(),
+        body('runtime').optional().isInt({ min: 0, max: 1000 }),
+        body('genres').optional().isString(),
+        body('overview').optional().isString().isLength({ max: 5000 }),
+        body('budget').optional().isInt({ min: 0 }),
+        body('revenue').optional().isInt({ min: 0 }),
+        body('mpa_rating').optional().isString().isLength({ max: 10 }),
+        body('collection').optional().isString(),
+        body('poster_url').optional().isString(),
+        body('backdrop_url').optional().isString(),
+        body('producers').optional().isString(),
+        body('directors').optional().isString(),
+        body('studios').optional().isString(),
+        body('studio_logos').optional().isString(),
+        body('studio_countries').optional().isString(),
+
+        // Actors 1–10
+        body('actor1_name').optional().isString().isLength({ max: 200 }),
+        body('actor1_character').optional().isString().isLength({ max: 200 }),
+        body('actor1_profile').optional().isString(),
+        body('actor2_name').optional().isString().isLength({ max: 200 }),
+        body('actor2_character').optional().isString().isLength({ max: 200 }),
+        body('actor2_profile').optional().isString(),
+        body('actor3_name').optional().isString().isLength({ max: 200 }),
+        body('actor3_character').optional().isString().isLength({ max: 200 }),
+        body('actor3_profile').optional().isString(),
+        body('actor4_name').optional().isString().isLength({ max: 200 }),
+        body('actor4_character').optional().isString().isLength({ max: 200 }),
+        body('actor4_profile').optional().isString(),
+        body('actor5_name').optional().isString().isLength({ max: 200 }),
+        body('actor5_character').optional().isString().isLength({ max: 200 }),
+        body('actor5_profile').optional().isString(),
+        body('actor6_name').optional().isString().isLength({ max: 200 }),
+        body('actor6_character').optional().isString().isLength({ max: 200 }),
+        body('actor6_profile').optional().isString(),
+        body('actor7_name').optional().isString().isLength({ max: 200 }),
+        body('actor7_character').optional().isString().isLength({ max: 200 }),
+        body('actor7_profile').optional().isString(),
+        body('actor8_name').optional().isString().isLength({ max: 200 }),
+        body('actor8_character').optional().isString().isLength({ max: 200 }),
+        body('actor8_profile').optional().isString(),
+        body('actor9_name').optional().isString().isLength({ max: 200 }),
+        body('actor9_character').optional().isString().isLength({ max: 200 }),
+        body('actor9_profile').optional().isString(),
+        body('actor10_name').optional().isString().isLength({ max: 200 }),
+        body('actor10_character').optional().isString().isLength({ max: 200 }),
+        body('actor10_profile').optional().isString()
+    ],
     handleValidationErrors,
     async (req: Request<{ id: string }>, res: Response): Promise<void> => {
         try {
@@ -173,18 +202,19 @@ r.patch(
 );
 
 /**
- * DELETE /protected/movies/:id
+ * DELETE /protected/deleteID/:id
+ * Delete a movie (same behavior as open route)
  */
 r.delete(
-    '/movies/:id',
-    [param('id').isInt({ min: 1 })],
+    '/deleteID/:id',
+    [param('id').isInt({ min: 1 }).withMessage('Movie ID must be a positive integer')],
     handleValidationErrors,
     async (req: Request<{ id: string }>, res: Response): Promise<void> => {
         try {
             const id = parseInt(req.params.id, 10);
-            const ok = await deleteMovieById(id);
+            const deleted = await deleteMovieById(id);
 
-            if (!ok) {
+            if (!deleted) {
                 res.status(404).json({
                     success: false,
                     message: `Movie with ID ${id} not found`,
@@ -205,52 +235,6 @@ r.delete(
                 success: false,
                 message: `Failed to delete movie: ${message}`,
                 code: 'MOVIE_DELETE_ERROR',
-                timestamp: new Date().toISOString()
-            });
-        }
-    }
-);
-
-/**
- * POST /protected/movies/:id/rating
- */
-r.post(
-    '/movies/:id/rating',
-    [
-        param('id').isInt({ min: 1 }),
-        body('rating').isFloat({ min: 0, max: 10 }),
-        body('userId').optional().isString().isLength({ max: 100 })
-    ],
-    handleValidationErrors,
-    async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-        try {
-            const movieId = parseInt(req.params.id, 10);
-            const { rating, userId } = req.body;
-
-            const movie = await getMovie(movieId);
-            if (!movie) {
-                res.status(404).json({
-                    success: false,
-                    message: `Movie with ID ${movieId} not found`,
-                    code: 'MOVIE_NOT_FOUND',
-                    timestamp: new Date().toISOString()
-                });
-                return;
-            }
-
-            const saved = await addMovieRating(movieId, parseFloat(String(rating)), userId);
-            res.status(201).json({
-                success: true,
-                message: 'Rating added successfully',
-                data: saved,
-                timestamp: new Date().toISOString()
-            });
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            res.status(500).json({
-                success: false,
-                message: `Failed to add rating: ${message}`,
-                code: 'MOVIE_RATING_ERROR',
                 timestamp: new Date().toISOString()
             });
         }
