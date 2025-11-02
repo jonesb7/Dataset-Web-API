@@ -1,12 +1,15 @@
 /**
- * Protected Movie Routes — mirror open routes with write access locked behind API key.
+ * Protected Movie Routes
  *
  * Endpoints (mounted under /protected):
- *   POST   /protected/post            -> createMovie
- *   PATCH  /protected/patchID/:id     -> patchMovie
- *   DELETE /protected/deleteID/:id    -> deleteMovieById
- *   GET    /protected/pages           -> paged listing
- *   GET    /protected/stats           -> stats by key
+ *   POST   /protected/post                 -> createMovie
+ *   PATCH  /protected/patchID/:id          -> patchMovie
+ *   DELETE /protected/deleteID/:id         -> deleteMovieById
+ *   GET    /protected/pages                -> paged listing
+ *   GET    /protected/stats                -> stats by key
+ *   GET    /protected/movies               -> list all
+ *   GET    /protected/random               -> random movies
+ *   GET    /protected/getID/:id            -> get movie by id
  */
 
 import { Router, Request, Response } from 'express';
@@ -17,7 +20,10 @@ import {
     patchMovie,
     deleteMovieById,
     getMoviesPage,
-    getMovieStats
+    getMovieStats,
+    listMovies,
+    getRandomMovies,
+    getMovie
 } from '@/services/movies.service';
 import { handleValidationErrors } from '@middleware/validation';
 
@@ -161,7 +167,6 @@ r.patch(
     async (req: Request<{ id: string }>, res: Response): Promise<void> => {
         try {
             const id = parseInt(req.params.id, 10);
-
             if (Object.keys(req.body).length === 0) {
                 res.status(400).json({
                     success: false,
@@ -171,7 +176,6 @@ r.patch(
                 });
                 return;
             }
-
             const movie = await patchMovie(id, req.body);
             if (!movie) {
                 res.status(404).json({
@@ -182,7 +186,6 @@ r.patch(
                 });
                 return;
             }
-
             res.json({
                 success: true,
                 message: 'Movie partially updated successfully',
@@ -212,7 +215,6 @@ r.delete(
         try {
             const id = parseInt(req.params.id, 10);
             const deleted = await deleteMovieById(id);
-
             if (!deleted) {
                 res.status(404).json({
                     success: false,
@@ -222,7 +224,6 @@ r.delete(
                 });
                 return;
             }
-
             res.json({
                 success: true,
                 message: `Movie with ID ${id} deleted successfully`,
@@ -310,6 +311,96 @@ r.get(
                 success: false,
                 message: `Failed to compute stats: ${message}`,
                 code: 'MOVIE_STATS_ERROR',
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+);
+
+/**
+ * GET /protected/movies  (list-all; you can later add filters)
+ */
+r.get('/movies', async (_req: Request, res: Response) => {
+    try {
+        const items = await listMovies({ page: 1, pageSize: 100 }); // simple default page
+        res.json({
+            success: true,
+            message: 'All movies fetched successfully',
+            data: items,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        res.status(500).json({
+            success: false,
+            message: `Failed to fetch movies: ${message}`,
+            code: 'MOVIES_LIST_ERROR',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * GET /protected/random  (?limit=10)
+ */
+r.get(
+    '/random',
+    [query('limit').optional().isInt({ min: 1, max: 100 })],
+    handleValidationErrors,
+    async (req: Request, res: Response) => {
+        try {
+            const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : 10;
+            const items = await getRandomMovies(limit);
+            res.json({
+                success: true,
+                message: 'Random movies fetched successfully',
+                data: items,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            res.status(500).json({
+                success: false,
+                message: `Failed to fetch random movies: ${message}`,
+                code: 'MOVIES_RANDOM_ERROR',
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+);
+
+/**
+ * GET /protected/getID/:id
+ */
+r.get(
+    '/getID/:id',
+    [param('id').isInt({ min: 1 }).withMessage('Movie ID must be a positive integer')],
+    handleValidationErrors,
+    async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const id = parseInt(req.params.id, 10);
+            const movie = await getMovie(id);
+            if (!movie) {
+                res.status(404).json({
+                    success: false,
+                    message: `Movie with ID ${id} not found`,
+                    code: 'MOVIE_NOT_FOUND',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+            res.json({
+                success: true,
+                message: 'Movie fetched successfully',
+                data: movie,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            res.status(500).json({
+                success: false,
+                message: `Failed to fetch movie: ${message}`,
+                code: 'MOVIE_GET_ERROR',
                 timestamp: new Date().toISOString()
             });
         }
