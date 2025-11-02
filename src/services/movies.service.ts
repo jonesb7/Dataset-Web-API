@@ -738,3 +738,71 @@ export async function deleteMovieById(id: number): Promise<boolean> {
     // Step 4: Confirm success
     return true;
 }
+// ---- Paged listing + stats exports (minimal, safe) ----
+export type PageOptions = {
+    page?: number;
+    limit?: number;
+    sort?: string;               // release_date | title | revenue | budget | runtime | id
+    order?: 'asc' | 'desc';
+    q?: string;                  // simple title search
+};
+
+// Tiny whitelist to prevent SQL injection in ORDER BY
+const SORT_WHITELIST = new Set([
+    'release_date', 'title', 'revenue', 'budget', 'runtime', 'id'
+]);
+
+export async function getMoviesPage(opts: PageOptions = {}) {
+    const page  = Number.isFinite(opts.page)  ? (opts.page as number)  : 1;
+    const limit = Number.isFinite(opts.limit) ? (opts.limit as number) : 25;
+    const offset = (page - 1) * limit;
+
+    const sort = (opts.sort && SORT_WHITELIST.has(opts.sort)) ? opts.sort! : 'release_date';
+    const order = (opts.order === 'asc' || opts.order === 'desc') ? opts.order : 'desc';
+    const q = (opts.q ?? '').trim();
+
+    const where: string[] = [];
+    const params: any[] = [];
+
+    if (q) {
+        params.push(`%${q.toLowerCase()}%`);
+        where.push('title IS NOT NULL');
+        where.push(`LOWER(title) LIKE $${params.length}`);
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const dataSql = `
+    ${BASE_SELECT}
+    ${whereSql}
+    ORDER BY ${sort} ${order.toUpperCase()} NULLS LAST
+    LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+  `;
+    const countSql = `
+    SELECT COUNT(*)::int AS total
+    FROM movie_import_raw
+    ${whereSql.replace('title', 'title')}  -- same conditions
+  `;
+
+    const dataParams = [...params, limit, offset];
+
+    const [dataRes, countRes] = await Promise.all([
+        pool.query(dataSql, dataParams),
+        pool.query(countSql, params)
+    ]);
+
+    const total = countRes.rows[0]?.total ?? 0;
+    return {
+        page,
+        limit,
+        total,
+        pages: Math.max(1, Math.ceil(total / limit)),
+        items: dataRes.rows
+    };
+}
+
+// Re-export your existing stats() under the name your route expects
+export async function getMovieStats(by: string) {
+    return stats(by);
+}
+

@@ -5,14 +5,20 @@
  *   POST   /protected/post            -> createMovie
  *   PATCH  /protected/patchID/:id     -> patchMovie
  *   DELETE /protected/deleteID/:id    -> deleteMovieById
- *
- *
+ *   GET    /protected/pages           -> paged listing
+ *   GET    /protected/stats           -> stats by key
  */
 
 import { Router, Request, Response } from 'express';
-import { param, body } from 'express-validator';
+import { param, body, query } from 'express-validator';
 import { authMiddleware } from '@middleware/auth';
-import { createMovie, patchMovie, deleteMovieById } from '@/services/movies.service';
+import {
+    createMovie,
+    patchMovie,
+    deleteMovieById,
+    getMoviesPage,
+    getMovieStats
+} from '@/services/movies.service';
 import { handleValidationErrors } from '@middleware/validation';
 
 const r: Router = Router();
@@ -22,7 +28,6 @@ r.use(authMiddleware);
 
 /**
  * POST /protected/post
- * Create a new movie (same validator surface as open route)
  */
 r.post(
     '/post',
@@ -44,8 +49,6 @@ r.post(
         body('studios').optional().isString(),
         body('studio_logos').optional().isString(),
         body('studio_countries').optional().isString(),
-
-        // Actors 1–10
         body('actor1_name').optional().isString().isLength({ max: 200 }),
         body('actor1_character').optional().isString().isLength({ max: 200 }),
         body('actor1_profile').optional().isString(),
@@ -101,7 +104,6 @@ r.post(
 
 /**
  * PATCH /protected/patchID/:id
- * Partial update (same behavior as open route)
  */
 r.patch(
     '/patchID/:id',
@@ -124,8 +126,6 @@ r.patch(
         body('studios').optional().isString(),
         body('studio_logos').optional().isString(),
         body('studio_countries').optional().isString(),
-
-        // Actors 1–10
         body('actor1_name').optional().isString().isLength({ max: 200 }),
         body('actor1_character').optional().isString().isLength({ max: 200 }),
         body('actor1_profile').optional().isString(),
@@ -203,7 +203,6 @@ r.patch(
 
 /**
  * DELETE /protected/deleteID/:id
- * Delete a movie (same behavior as open route)
  */
 r.delete(
     '/deleteID/:id',
@@ -235,6 +234,82 @@ r.delete(
                 success: false,
                 message: `Failed to delete movie: ${message}`,
                 code: 'MOVIE_DELETE_ERROR',
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+);
+
+/**
+ * GET /protected/pages  (page, limit, sort, order, q)
+ */
+r.get(
+    '/pages',
+    [
+        query('page').optional().isInt({ min: 1 }),
+        query('limit').optional().isInt({ min: 1, max: 100 }),
+        query('sort').optional().isString(),
+        query('order').optional().isIn(['asc', 'desc']),
+        query('q').optional().isString()
+    ],
+    handleValidationErrors,
+    async (req: Request, res: Response) => {
+        try {
+            const page = req.query.page ? parseInt(String(req.query.page), 10) : undefined;
+            const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined;
+            const sort = typeof req.query.sort === 'string' ? req.query.sort : undefined;
+            const order = typeof req.query.order === 'string' ? (req.query.order as 'asc' | 'desc') : undefined;
+            const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+
+            const result = await getMoviesPage({
+                ...(page !== undefined ? { page } : {}),
+                ...(limit !== undefined ? { limit } : {}),
+                ...(sort ? { sort } : {}),
+                ...(order ? { order } : {}),
+                ...(q ? { q } : {})
+            });
+
+            res.json({
+                success: true,
+                message: 'Movies page fetched successfully',
+                data: result,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            res.status(500).json({
+                success: false,
+                message: `Failed to fetch movies page: ${message}`,
+                code: 'MOVIE_PAGES_ERROR',
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+);
+
+/**
+ * GET /protected/stats?by=...
+ */
+r.get(
+    '/stats',
+    [query('by').exists().isString()],
+    handleValidationErrors,
+    async (req: Request, res: Response) => {
+        try {
+            const by = String(req.query.by);
+            const data = await getMovieStats(by);
+            res.json({
+                success: true,
+                message: 'Movie stats computed successfully',
+                data,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            res.status(400).json({
+                success: false,
+                message: `Failed to compute stats: ${message}`,
+                code: 'MOVIE_STATS_ERROR',
                 timestamp: new Date().toISOString()
             });
         }
