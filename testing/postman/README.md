@@ -1,9 +1,9 @@
 ## Movie Database API
 Hosted WebAPI: https://dataset-web-api.onrender.com/api-docs/
 
-Credentials Code: 
+Credentials WebAPI: https://credential-api-giuj.onrender.com/api-docs/
 
-Credentials WebAPI: 
+Credentials Code: https://github.com/buruky/460-Credentials-API
 
 ### Project Overview
 This project implements two separate Web APIs using Node.js/Express and PostgreSQL:
@@ -97,4 +97,53 @@ project and next steps.
 ### Beta Sprint II Comments
 After database update we project that things should go more smoothly, as that was
 what was causing the most issues. 
+
+## Beta Sprint Contribution
+
+#### Buruk
+Looked at adding additional routes for the next sprint
+#### Cai
+Fixed routes not connecting properly, added in the route for getting random movies. Updated documentation for
+movies routes and preliminary postman test.
+#### Victor
+N/A
+#### Brittney
+Created render(our official version) and neon web server instances, connected database to render/neon,
+created some files (seedMovies.ts) and updated some files. Created some basic routes.
+#### Abdullahi
+Made fixes to .env to allow us to run the project on a local file in addition to the web server.
+This allows us to run postman tests. Rewrote postman tests so that they run properly.
+
+
+### Beta Sprint Meetings
+Group meeting of Buruk, Brittney, and Cai on Wednesday. We went over the code examples for the individual work to
+better understand what the requirements were for. We tried to get a second follow-up meeting for other members on
+Thursday, but unfortunately availability did not work out.  We ultimately left the work delegation and planning for
+discord. Activity was a little low for most of the week but most member were fairly active in the last few days.
+
+### Beta Sprint Comments
+Some difficulty planning the sprint as we were only able to actually start about halfway through the week.
+It might be useful for the sprint descriptions to be published a little earlier so we have more time to plan.
+
+## Production Sprint Contribution
+
+#### Buruk
+TODO
+#### Cai
+Edited all old routes in movies api to include all variables. removed some redundant routes. 
+Finished additions of all Postman tests for Movies API. Made Neon database for our Credentials project. 
+#### Victor
+TODO
+#### Brittney
+TODO
+#### Abdullahi
+TODO
+
+
+### Production Sprint Meetings
+We had a meeting of Cai, Buruk, and Brittney on Tuesday where we divided up work and planned the sprint. We then gave a 
+meeting summary to the whole group and informed everyone on what they should be trying to finish for this week. 
+
+### Production Sprint Comments
+TODO
 
