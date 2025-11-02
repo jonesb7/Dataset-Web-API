@@ -4,8 +4,8 @@ info:
   version: 1.0.0
   description: |
     API for movies from the last 30 years.
-    Provides routes for listing, retrieving, and analyzing movies.
-    Supports filtering, pagination, and statistics grouped by year or genre.
+    Provides routes for listing, retrieving, creating, updating, deleting, and analyzing movies.
+    Supports filtering, pagination, and statistics grouped by year, genre, or other dimensions.
 
 servers:
   - url: https://dataset-web-api.onrender.com/api
@@ -19,216 +19,333 @@ components:
       type: apiKey
       in: header
       name: x-api-key
-
-
+      description: API key required for write operations (POST, PATCH, DELETE)
 
   schemas:
     MovieInput:
       description: Input payload for creating/updating a movie. Same as Movie without movie_id.
       type: object
-      required: [ title ]
+      required: [title]
       properties:
-        title: { type: string }
-        original_title: { type: string, nullable: true }
-        release_date: { type: string, format: date, nullable: true }
-        runtime: { type: integer, nullable: true }
-        genres: { type: string, nullable: true }
-        overview: { type: string, nullable: true }
-        budget: { type: integer, nullable: true }
-        revenue: { type: integer, nullable: true }
-        mpa_rating: { type: string, nullable: true }
-        country: { type: string, nullable: true }
-    Movie:
-      type: object
-      required: [movie_id, title]
-      properties:
-        movie_id:
-          type: integer
-          example: 101
         title:
           type: string
-          example: "Inception"
+          maxLength: 500
+          description: Movie title (required)
         original_title:
           type: string
           nullable: true
-          example: "Inception"
+          maxLength: 500
+          description: Original title if different from title
         release_date:
           type: string
           format: date
-          example: "2010-07-16"
+          nullable: true
+          description: Release date in ISO 8601 format (YYYY-MM-DD)
         runtime:
           type: integer
-          example: 148
-          description: "minutes"
+          nullable: true
+          minimum: 0
+          maximum: 1000
+          description: Runtime in minutes
         genres:
           type: string
+          nullable: true
           description: Semicolon-separated list of genres
-          example: "Science Fiction; Thriller"
         overview:
           type: string
           nullable: true
+          maxLength: 5000
+          description: Movie plot summary/description
         budget:
           type: integer
           nullable: true
-          example: 160000000
+          minimum: 0
+          description: Production budget in USD
         revenue:
           type: integer
           nullable: true
-          example: 829895144
-        studios:
-          type: string
-          description: Semicolon-separated list of studios
-          example: "Warner Bros.; Legendary Pictures"
-        producers:
-          type: string
-          description: Semicolon-separated list of producers
-          example: "Emma Thomas; Christopher Nolan"
-        directors:
-          type: string
-          description: Semicolon-separated list of directors
-          example: "Christopher Nolan"
+          minimum: 0
+          description: Box office revenue in USD
         mpa_rating:
           type: string
           nullable: true
-          example: "PG-13"
+          maxLength: 10
+          description: MPA rating (G, PG, PG-13, R, NC-17)
         collection:
           type: string
           nullable: true
-          example: "The Dark Knight Collection"
+          description: Movie collection/franchise name
         poster_url:
           type: string
-          format: uri
           nullable: true
+          description: URL to poster image
         backdrop_url:
           type: string
-          format: uri
           nullable: true
+          description: URL to backdrop image
+        producers:
+          type: string
+          nullable: true
+          description: Semicolon-separated list of producers
+        directors:
+          type: string
+          nullable: true
+          description: Semicolon-separated list of directors
+        studios:
+          type: string
+          nullable: true
+          description: Semicolon-separated list of studios
         studio_logos:
           type: string
-          description: Semicolon-separated list of studio logo urls
           nullable: true
+          description: Semicolon-separated list of studio logo URLs
         studio_countries:
           type: string
-          description: Semicolon-separated list of studio countries
           nullable: true
-
+          description: Semicolon-separated list of studio countries
         actor1_name:
           type: string
           nullable: true
+          maxLength: 200
         actor1_character:
           type: string
           nullable: true
+          maxLength: 200
         actor1_profile:
           type: string
-          format: uri
           nullable: true
         actor2_name:
           type: string
           nullable: true
+          maxLength: 200
         actor2_character:
           type: string
           nullable: true
+          maxLength: 200
         actor2_profile:
           type: string
-          format: uri
           nullable: true
         actor3_name:
           type: string
           nullable: true
+          maxLength: 200
         actor3_character:
           type: string
           nullable: true
+          maxLength: 200
         actor3_profile:
           type: string
-          format: uri
           nullable: true
         actor4_name:
           type: string
           nullable: true
+          maxLength: 200
         actor4_character:
           type: string
           nullable: true
+          maxLength: 200
         actor4_profile:
           type: string
-          format: uri
           nullable: true
         actor5_name:
           type: string
           nullable: true
+          maxLength: 200
         actor5_character:
           type: string
           nullable: true
+          maxLength: 200
         actor5_profile:
           type: string
-          format: uri
           nullable: true
         actor6_name:
           type: string
           nullable: true
+          maxLength: 200
         actor6_character:
           type: string
           nullable: true
+          maxLength: 200
         actor6_profile:
           type: string
-          format: uri
           nullable: true
         actor7_name:
           type: string
           nullable: true
+          maxLength: 200
         actor7_character:
           type: string
           nullable: true
+          maxLength: 200
         actor7_profile:
           type: string
-          format: uri
           nullable: true
         actor8_name:
           type: string
           nullable: true
+          maxLength: 200
         actor8_character:
           type: string
           nullable: true
+          maxLength: 200
         actor8_profile:
           type: string
-          format: uri
           nullable: true
         actor9_name:
           type: string
           nullable: true
+          maxLength: 200
         actor9_character:
           type: string
           nullable: true
+          maxLength: 200
         actor9_profile:
           type: string
-          format: uri
           nullable: true
         actor10_name:
           type: string
           nullable: true
+          maxLength: 200
         actor10_character:
           type: string
           nullable: true
+          maxLength: 200
         actor10_profile:
+          type: string
+          nullable: true
+
+    Movie:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: integer
+          example: 101
+          description: Unique movie identifier
+        title:
+          type: string
+          example: "Inception"
+          description: Movie title
+        original_title:
+          type: string
+          nullable: true
+          example: "Inception"
+          description: Original title if different
+        release_date:
+          type: string
+          format: date
+          example: "2010-07-16"
+          description: Release date
+        runtime:
+          type: integer
+          example: 148
+          description: Runtime in minutes
+        genres:
+          type: array
+          items:
+            type: string
+          description: Array of genre names
+          example: ["Science Fiction", "Thriller"]
+        overview:
+          type: string
+          nullable: true
+          description: Movie plot summary
+        budget:
+          type: integer
+          nullable: true
+          example: 160000000
+          description: Production budget in USD
+        revenue:
+          type: integer
+          nullable: true
+          example: 829895144
+          description: Box office revenue in USD
+        studios:
+          type: array
+          items:
+            type: string
+          description: Array of studio names
+          example: ["Warner Bros.", "Legendary Pictures"]
+        producers:
+          type: array
+          items:
+            type: string
+          description: Array of producer names
+          example: ["Emma Thomas", "Christopher Nolan"]
+        directors:
+          type: array
+          items:
+            type: string
+          description: Array of director names
+          example: ["Christopher Nolan"]
+        mpa_rating:
+          type: string
+          nullable: true
+          example: "PG-13"
+          description: MPA rating
+        collection:
+          type: string
+          nullable: true
+          example: "The Dark Knight Collection"
+          description: Movie collection/franchise
+        poster_url:
           type: string
           format: uri
           nullable: true
+          description: Poster image URL
+        backdrop_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Backdrop image URL
+        studio_logos:
+          type: array
+          items:
+            type: string
+          description: Array of studio logo URLs
+          nullable: true
+        studio_countries:
+          type: array
+          items:
+            type: string
+          description: Array of studio countries
+          nullable: true
+        actors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                nullable: true
+              character:
+                type: string
+                nullable: true
+              profile:
+                type: string
+                format: uri
+                nullable: true
+          description: Array of up to 10 actors with character and profile info
 
     PagedMovies:
       type: object
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Movie'
+        success:
+          type: boolean
+          example: true
         page:
           type: integer
           example: 1
         pageSize:
           type: integer
           example: 25
-        total:
-          type: integer
-          example: 2371
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movie'
+        timestamp:
+          type: string
+          format: date-time
 
     StatBucket:
       type: object
@@ -236,9 +353,31 @@ components:
         key:
           type: string
           example: "2010"
+          description: The grouping key (genre, year, etc.)
         count:
           type: integer
           example: 145
+          description: Number of movies in this group
+
+    NumericStats:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Total count of records
+        avg:
+          type: number
+          format: float
+          description: Average value
+        min:
+          type: number
+          description: Minimum value
+        max:
+          type: number
+          description: Maximum value
+        sum:
+          type: number
+          description: Sum of all values
 
     Error:
       type: object
@@ -249,6 +388,12 @@ components:
         message:
           type: string
           example: "Movie not found"
+        code:
+          type: string
+          example: "MOVIE_NOT_FOUND"
+        timestamp:
+          type: string
+          format: date-time
 
 security:
   - ApiKeyAuth: []
@@ -256,41 +401,29 @@ security:
 paths:
   /movies:
     get:
-      summary: List movies
-      description: >
-        Returns movies with optional filters and pagination.
-        Query parameters allow filtering by year, title, or genre.
+      summary: List movies with basic pagination
+      description: |
+        Returns a paginated list of movies with basic filtering options.
+        This endpoint supports simple pagination without advanced filters.
+      tags:
+        - Movies
+      security: []
       parameters:
-        - in: query
-          name: year
-          schema:
-            type: integer
-            minimum: 1900
-            maximum: 2100
-          description: Filter by release year
-        - in: query
-          name: title
-          schema:
-            type: string
-          description: Filter by title (partial match)
-        - in: query
-          name: genre
-          schema:
-            type: string
-          description: Filter by genre name (exact match)
         - in: query
           name: page
           schema:
             type: integer
-            default: 1
             minimum: 1
+            default: 1
+          description: Page number
         - in: query
           name: pageSize
           schema:
             type: integer
-            default: 25
             minimum: 1
             maximum: 100
+            default: 25
+          description: Number of movies per page
       responses:
         '200':
           description: Successfully retrieved movies list
@@ -304,36 +437,189 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    post:
-      summary: Create a movie
-      operationId: createMovie
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MovieInput'
+
+  /movies/page:
+    get:
+      summary: Advanced paginated list with comprehensive filters
+      description: |
+        Returns a paginated list of movies with advanced filtering capabilities.
+        Supports filtering by year range, runtime, budget, revenue, genre, rating,
+        title search, studios, producers, directors, collections, and actor names.
+        All filters can be combined to narrow down search results.
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Page number (starting from 1)
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            maximum: 100
+          description: Number of movies per page
+        - in: query
+          name: yearStart
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2100
+          description: Minimum release year
+        - in: query
+          name: yearEnd
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2100
+          description: Maximum release year
+        - in: query
+          name: year
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2100
+          description: Filter by specific release year
+        - in: query
+          name: runtimeMin
+          schema:
+            type: integer
+            minimum: 0
+          description: Minimum runtime in minutes
+        - in: query
+          name: runtimeMax
+          schema:
+            type: integer
+            minimum: 0
+          description: Maximum runtime in minutes
+        - in: query
+          name: budgetMin
+          schema:
+            type: integer
+            minimum: 0
+          description: Minimum budget in USD
+        - in: query
+          name: budgetMax
+          schema:
+            type: integer
+            minimum: 0
+          description: Maximum budget in USD
+        - in: query
+          name: revenueMin
+          schema:
+            type: integer
+            minimum: 0
+          description: Minimum revenue in USD
+        - in: query
+          name: revenueMax
+          schema:
+            type: integer
+            minimum: 0
+          description: Maximum revenue in USD
+        - in: query
+          name: title
+          schema:
+            type: string
+          description: Filter by partial movie title match (case-insensitive)
+        - in: query
+          name: genre
+          schema:
+            type: string
+          description: Filter by genre (exact match)
+        - in: query
+          name: mpaRating
+          schema:
+            type: string
+          description: Filter by MPA rating (e.g., PG-13, R)
+        - in: query
+          name: studios
+          schema:
+            type: string
+          description: Filter by studio name (case-insensitive)
+        - in: query
+          name: producers
+          schema:
+            type: string
+          description: Filter by producer name (case-insensitive)
+        - in: query
+          name: directors
+          schema:
+            type: string
+          description: Filter by director name (case-insensitive)
+        - in: query
+          name: collection
+          schema:
+            type: string
+          description: Filter by movie collection name
+        - in: query
+          name: posterUrl
+          schema:
+            type: string
+          description: Filter by poster image URL or partial match
+        - in: query
+          name: backdropUrl
+          schema:
+            type: string
+          description: Filter by backdrop image URL or partial match
+        - in: query
+          name: studioLogos
+          schema:
+            type: string
+          description: Filter by studio logo path or reference
+        - in: query
+          name: studioCountries
+          schema:
+            type: string
+          description: Filter by studio country name
+        - in: query
+          name: actorNames
+          schema:
+            type: string
+          description: Comma-separated actor names to filter by
       responses:
-        '201':
-          description: Created
+        '200':
+          description: Paginated movie results with applied filters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Movie'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 25
+                  offset:
+                    type: integer
+                    example: 0
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Movie'
         '400':
-          description: Validation error
+          description: Invalid query parameters
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      security:
-        - ApiKeyAuth: []
-
 
   /movies/random:
     get:
       summary: Get random movies
-      description: Returns a random selection of movies (default 10).
+      description: Returns a random selection of 10 movies from the database.
+      tags:
+        - Movies
+      security: []
       responses:
         '200':
           description: Array of random movies
@@ -349,6 +635,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Movie'
+                  timestamp:
+                    type: string
+                    format: date-time
         '500':
           description: Server error
           content:
@@ -356,170 +645,72 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /movies/page:
-    get:
-      summary: Paginated list of movies with advanced filters
-      description: >
-        Returns a list of movies using a `page` number and `limit`.
-        Supports detailed movie browsing through the movies/paged route, allowing filtering by several criteria to refine search results. Movies can be narrowed down by title, specific year or range of years, runtime length, genre, or MPA rating. Filters also include production details such as studios, producers, directors, and collections, as well as visual elements like poster or backdrop image links. Additionally, filtering can be applied to studio logos, studio countries, and actor names appearing in the cast. All of these options can be combined to locate specific kinds of movies, such as action films from a certain year featuring a particular actor, while also controlling how many results appear per page and which page of results to view for a smoother browsing experience.
-    parameters:
-      - in: query
-        name: page
-        required: false
-        schema:
-          type: integer
-          default: 1
-          minimum: 1
-        description: Page number (starting from 1)
-      - in: query
-        name: limit
-        required: false
-        schema:
-          type: integer
-          default: 25
-          minimum: 1
-          maximum: 100
-        description: Number of movies per page
-      - in: query
-        name: yearStart
-        schema:
-          type: integer
-          minimum: 1900
-          maximum: 2100
-        description: Minimum release year
-      - in: query
-        name: yearEnd
-        schema:
-          type: integer
-          minimum: 1900
-          maximum: 2100
-        description: Maximum release year
-      - in: query
-        name: year
-        schema:
-          type: integer
-          minimum: 1900
-          maximum: 2100
-        description: Filter by specific release year
-      - in: query
-        name: runtimeMin
-        schema:
-          type: integer
-          minimum: 0
-        description: Minimum runtime in minutes
-      - in: query
-        name: runtimeMax
-        schema:
-          type: integer
-          minimum: 0
-        description: Maximum runtime in minutes
-      - in: query
-        name: title
-        schema:
-          type: string
-        description: Filter by partial movie title match
-      - in: query
-        name: genre
-        schema:
-          type: string
-        description: Filter by genre (exact match)
-      - in: query
-        name: mpaRating
-        schema:
-          type: string
-        description: Filter by MPA rating (e.g., PG-13, R)
-      - in: query
-        name: studios
-        schema:
-          type: string
-        description: Filter by studio name (case-insensitive)
-      - in: query
-        name: producers
-        schema:
-          type: string
-        description: Filter by producer name (case-insensitive)
-      - in: query
-        name: directors
-        schema:
-          type: string
-        description: Filter by director name (case-insensitive)
-      - in: query
-        name: collection
-        schema:
-          type: string
-        description: Filter by movie collection name
-      - in: query
-        name: posterUrl
-        schema:
-          type: string
-        description: Filter by poster image URL or partial match
-      - in: query
-        name: backdropUrl
-        schema:
-          type: string
-        description: Filter by backdrop image URL or partial match
-      - in: query
-        name: studioLogos
-        schema:
-          type: string
-        description: Filter by studio logo path or reference
-      - in: query
-        name: studioCountries
-        schema:
-          type: string
-        description: Filter by studio country name
-      - in: query
-        name: actorNames
-        schema:
-          type: array
-          items:
-            type: string
-        description: Filter by actor names (matches any in cast)
-  responses:
-      '200':
-        description: Paginated movie results with applied filters
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success: { type: boolean, example: true }
-                page: { type: integer, example: 1 }
-                limit: { type: integer, example: 25 }
-                totalResults: { type: integer, example: 2470 }
-                offset: { type: integer, example: 0 }
-                data:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Movie'
-      '400':
-        description: Invalid query parameters
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Error'
-
   /movies/stats:
     get:
       summary: Movie statistics
-      description: Returns aggregated movie counts grouped by year or genre.
+      description: |
+        Returns aggregated movie statistics grouped by the specified dimension.
+        Supports both categorical groupings (genre, year, etc.) and numeric
+        aggregations (runtime, budget, revenue).
+      tags:
+        - Movies
+      security: []
       parameters:
         - in: query
           name: by
           required: true
           schema:
             type: string
-            enum: [year, genre]
-          description: Grouping dimension
+            enum:
+              - genre
+              - year
+              - mpa_rating
+              - producers
+              - directors
+              - studios
+              - collection
+              - runtime
+              - budget
+              - revenue
+          description: Dimension to group statistics by
       responses:
         '200':
           description: Statistics results
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StatBucket'
+                oneOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      groupedBy:
+                        type: string
+                        example: "genre"
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StatBucket'
+                      count:
+                        type: integer
+                        example: 24
+                      timestamp:
+                        type: string
+                        format: date-time
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      groupedBy:
+                        type: string
+                        example: "revenue"
+                      data:
+                        $ref: '#/components/schemas/NumericStats'
+                      timestamp:
+                        type: string
+                        format: date-time
         '400':
           description: Missing or invalid 'by' parameter
           content:
@@ -527,9 +718,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /movies/{id}:
+  /movies/getID/{id}:
     get:
       summary: Get movie details by ID
+      description: Retrieve detailed information about a specific movie.
+      tags:
+        - Movies
+      security: []
       parameters:
         - in: path
           name: id
@@ -539,32 +734,197 @@ paths:
           description: Numeric movie ID
       responses:
         '200':
-          description: Single movie object
+          description: Movie details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Movie'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Movie'
+                  timestamp:
+                    type: string
+                    format: date-time
         '404':
           description: Movie not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    delete:
-      summary: Delete a movie by id
-      operationId: deleteMovie
+
+  /movies/post:
+    post:
+      summary: Create a new movie
+      description: |
+        Create a new movie record in the database. Requires API key authentication.
+        Only the title field is required; all other fields are optional.
+      tags:
+        - Movies
+      operationId: createMovie
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieInput'
+            example:
+              title: "The Quantum Paradox"
+              release_date: "2024-06-15"
+              runtime: 135
+              genres: "Science Fiction; Thriller"
+              overview: "A physicist discovers a portal to parallel universes..."
+              budget: 75000000
+              mpa_rating: "PG-13"
+              directors: "Jane Director"
+              studios: "Quantum Pictures"
+              actor1_name: "John Actor"
+              actor1_character: "Dr. Smith"
+      responses:
+        '201':
+          description: Movie created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Movie created successfully"
+                  data:
+                    $ref: '#/components/schemas/Movie'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /movies/patchID/{id}:
+    patch:
+      summary: Partially update a movie
+      description: |
+        Update specific fields of an existing movie. Only provided fields will be updated.
+        Requires API key authentication.
+      tags:
+        - Movies
+      operationId: patchMovie
+      security:
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
+          description: Movie ID to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieInput'
+            example:
+              revenue: 185000000
+              mpa_rating: "R"
+              overview: "Updated description with more details..."
       responses:
-        '204': { description: Deleted, no content }
+        '200':
+          description: Movie updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Movie partially updated successfully"
+                  data:
+                    $ref: '#/components/schemas/Movie'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Validation error or no fields provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Movie not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /movies/deleteID/{id}:
+    delete:
+      summary: Delete a movie
+      description: |
+        Remove a movie from the database by ID. Requires API key authentication.
+      tags:
+        - Movies
+      operationId: deleteMovie
       security:
-        - ApiKeyAuth: [ ]
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Movie ID to delete
+      responses:
+        '200':
+          description: Movie deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Movie with ID 5001 deleted successfully"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
