@@ -245,7 +245,7 @@ r.delete(
  * GET /protected/pages  (page, limit, sort, order, q)
  */
 r.get(
-    '/pages',
+    '/page',
     [
         query('page').optional().isInt({ min: 1 }),
         query('limit').optional().isInt({ min: 1, max: 100 }),
@@ -348,6 +348,7 @@ r.get(
     [query('limit').optional().isInt({ min: 1, max: 100 })],
     handleValidationErrors,
     async (req: Request, res: Response) => {
+        console.log('Loaded API Key:', process.env.API_KEY);
         try {
             const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : 10;
             const items = await getRandomMovies(limit);
