@@ -31,10 +31,11 @@ routes.use('/hello', helloRoutes);
 // Parameters demonstration routes (no authentication required)
 routes.use('/parameters', parametersRoutes);
 
-routes.use('/api/movies', moviesRoutes);
+// final version
+// routes.use('/api/movies', protectedMoviesRoutes);
 
-//Added this mount
-routes.use('/protected', protectedMoviesRoutes);
+routes.use('/api/movies', moviesRoutes);
+// routes.use('/protected', protectedMoviesRoutes);
 
 // Documentation routes (no authentication required)
 routes.use('/docs', docsRoutes);

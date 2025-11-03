@@ -11,10 +11,13 @@ import {
     patchMovie,
     deleteMovieById
 } from '@/services/movies.service';
-
+import { authMiddleware } from '@middleware/auth';
 import { handleValidationErrors } from '@middleware/validation';
 
 const r: Router = Router();
+
+// Require API key for everything in this router
+r.use(authMiddleware);
 
 // GET /api/movies
 r.get('/', async (req: Request, res: Response): Promise<void> => {

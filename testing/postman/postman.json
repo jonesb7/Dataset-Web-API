@@ -9,8 +9,42 @@
     { "key": "baseUrl_local", "value": "http://localhost:8000/api" },
     { "key": "baseUrl_render", "value": "https://dataset-web-api.onrender.com/api" },
     { "key": "baseUrl", "value": "http://localhost:8000/api" },
-    { "key": "testMovieId", "value": "" }
+    { "key": "testMovieId", "value": "" },
+    { "auth": {
+      "type": "apikey",
+      "apikey": [
+        {
+          "key": "key",
+          "value": "x-api-key",
+          "type": "string"
+        },
+        {
+          "key": "value",
+          "value": "dev-key",
+          "type": "string"
+        },
+        {
+          "key": "in",
+          "value": "header",
+          "type": "string"
+        }
+      ]
+    }
+    }
   ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set the API key header for all requests",
+          "pm.request.headers.add({ key: 'x-api-key', value: 'dev-key' });"
+        ]
+      }
+    }
+  ],
+
   "item": [
     {
       "name": "Movies POST – Create New Movie",

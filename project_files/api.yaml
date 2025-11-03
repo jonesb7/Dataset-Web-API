@@ -19,7 +19,7 @@ components:
       type: apiKey
       in: header
       name: x-api-key
-      description: API key required for write operations (POST, PATCH, DELETE)
+      description: API key required for all operations concerning the movies database
 
   schemas:
     MovieInput:

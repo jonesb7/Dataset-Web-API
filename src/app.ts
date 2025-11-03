@@ -19,6 +19,7 @@ import moviesRouter from '@routes/open/movies.routes';
 import fs from 'fs';
 import yaml from 'yaml';
 import path from 'path';
+import protectedMoviesRoutes from '@routes/protected/movies.routes';
 
 /**
  * Create and configure Express application with complete middleware stack
@@ -70,6 +71,7 @@ export const createApp = (): Express => {
     // 🌐 API Routes
     // =======================
     app.use('/api/movies', moviesRouter);
+    // app.use('/api/movies', protectedMoviesRoutes);
     app.use('/', routes);
 
     // =======================
