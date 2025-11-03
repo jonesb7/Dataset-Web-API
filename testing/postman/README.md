@@ -128,16 +128,25 @@ It might be useful for the sprint descriptions to be published a little earlier 
 ## Production Sprint Contribution
 
 #### Buruk
-TODO
+cloned credentials api into git and connected it to a new render account and fixed connection to render account 
+after not working initially. Also did all of the non-admin middleware in credentials and documented them.
 #### Cai
 Edited all old routes in movies api to include all variables. removed some redundant routes. 
 Finished additions of all Postman tests for Movies API. Made Neon database for our Credentials project. 
+Finalized the removal of non-protected routes. Made postman tests for the open routes of Credentials API. 
+Managed group communications. 
 #### Victor
-TODO
+documentation: api/movies api/movies/page api/movies/random api/movies/post api/movies/patchID:id 
+api/movies/deleteID/:id api/movies/getID/:id
 #### Brittney
-TODO
+Set up back-end settings to render, to get the Postgres URL and create our env file to be able to connect to server. 
+Created new files, added admin authentication middleware, updated admin controller for registration/login logic, 
+Updated main and admin route files for new endpoints.
+
+Configured Render PostgreSQL connection and JWT settings in .env
 #### Abdullahi
-TODO
+Finalized the protected movie routes, ensuring all endpoints were secured under /protected/* with API key 
+authentication. Verified full functionality delete, fetch, and stats routes through Postman and curl testing.
 
 
 ### Production Sprint Meetings
@@ -145,5 +154,6 @@ We had a meeting of Cai, Buruk, and Brittney on Tuesday where we divided up work
 meeting summary to the whole group and informed everyone on what they should be trying to finish for this week. 
 
 ### Production Sprint Comments
-TODO
+Little unclear on some specifics on how the Credentials API is supposed to turn out, but as far as we can tell it 
+meets the requirements as defined in the beginning README.
 
